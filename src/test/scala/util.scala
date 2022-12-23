@@ -1,13 +1,12 @@
 package be.adamv.momentum
 
-import be.adamv.deltastream.*
-import be.adamv.deltastream.util.*
-import org.scalatest.funsuite.AnyFunSuite
+import be.adamv.momentum.util.*
+import munit.FunSuite
 
 import scala.collection.mutable.ListBuffer
 
 
-class UtilTest extends AnyFunSuite:
+class UtilTest extends FunSuite:
   test("source deplete") {
     val xs = 1 to 9
     val ys = ListBuffer[Int]()

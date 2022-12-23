@@ -1,11 +1,11 @@
 package be.adamv.momentum
 
-import be.adamv.deltastream.*
-import be.adamv.deltastream.util.*
-import org.scalatest.funsuite.AnyFunSuite
+import be.adamv.momentum.util.*
+import be.adamv.momentum.concrete.*
+import munit.FunSuite
 
 
-class BaseExamples extends AnyFunSuite:
+class BaseExamples extends FunSuite:
   test("Var fibonacci") {
     val fib = Var(1, 1)
     val (pulse, progress) = newTicker()
