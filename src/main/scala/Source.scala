@@ -1,52 +1,31 @@
 package be.adamv.momentum
 
 
-// values are pushed though the system into the sink you specify
-@FunctionalInterface
-trait Source[+A]:
-  self =>
-  // A Source is defined by how you'd drain it (and how that affects the Source)
-  def adapt(s: Sink[A]): Source[_]
+type SetAdaptor[+A, R] = Setter[A, R] => R
 
-  inline def tapEach(f: A => Unit): Source[A] =
-    (s: Sink[A]) => self.adapt(s.eachTapped(f))
+extension [A, R](sadapt: SetAdaptor[A, R])
+  inline def mapS[B](inline f: Setter[B, R] => Setter[A, R]): SetAdaptor[B, R] =
+    (s: Setter[B, R]) => sadapt(f(s))
 
-  inline def mapTo[B](v: => B): Source[B] =
-    (s: Sink[B]) => self.adapt(s.contramapTo(v))
+  /*
+  def buffered: SetAdaptor[A, R] & RBuffered[A] = new SetAdaptor[A, R] with ConcreteBuffered[A]:
+    def apply(sset: Setter[A, _]): R =
+      sadapt(a => {
+        if last.fold(true)(_ != a) then sset(a)
+        _last = Some(a)
+      })
 
-  inline def map[B](f: A => B): Source[B] =
-    (s: Sink[B]) => self.adapt(s.contramap(f))
+  def valued(initial: A): SetAdaptor[A, R] & RValued[A] = new SetAdaptor[A, R] with ConcreteValued[A](initial):
+    def apply(sset: Setter[A, _]): R =
+      sadapt(a => {
+        sset(a)
+        _value = a
+      })
 
-  inline def filter(p: A => Boolean): Source[A] =
-    (s: Sink[A]) => self.adapt(s.contrafilter(p))
-
-  inline def collect[B](pf: PartialFunction[A, B]): Source[B] =
-    (s: Sink[B]) => self.adapt(s.contracollect(pf))
-
-  inline def scan[B](z: B)(op: (B, A) => B): Source[B] =
-    (s: Sink[B]) => self.adapt(s.scan(z)(op))
-
-object Source:
-  extension [A](es: Source[A])
-    def register(f: A => Unit): Source[_] = es.adapt(a => f(a))
-
-    def buffered: Source[A] & RBuffered[A] = new Source[A] with ConcreteBuffered[A]:
-      def adapt(s: Sink[A]): Source[_] =
-        es.adapt(a => {
-          if last.fold(true)(_ != a) then s.set(a)
-          _last = Some(a)
-        })
-
-    def valued(initial: A): Source[A] & RValued[A] = new Source[A] with ConcreteValued[A](initial):
-      def adapt(s: Sink[A]): Source[_] =
-        es.adapt(a => {
-          s.set(a)
-          _value = a
-        })
-
-    def traced: Source[A] & RTraced[A] = new Source[A] with ConcreteTraced[A]:
-      def adapt(s: Sink[A]): Source[_] =
-        es.adapt(a => {
-          if last.fold(true)(_ != a) then s.set(a)
-          trace.push(a)
-        })
+  def traced: SetAdaptor[A, R] & RTraced[A] = new SetAdaptor[A, R] with ConcreteTraced[A]:
+    def apply(sset: Setter[A, _]): R =
+      sadapt(a => {
+        if last.fold(true)(_ != a) then sset(a)
+        trace.push(a)
+      })
+*/

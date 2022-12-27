@@ -37,7 +37,7 @@ trait ConcreteTraced[A] extends RTraced[A], WTraced[A]:
   def history(i: Int): Option[A] = Option.when(i < trace.length)(trace(i))
   def newValue(a: A): Unit = trace.push(a)
 
-extension [A](es: RBuffered[A] & Source[A])
+/*extension [A](es: RBuffered[A] & Source[A])
   def dedup: RBuffered[A] & Source[A] = new Source[A] with ConcreteBuffered[A]:
     override def adapt(s: Sink[A]): Source[_] =
       es.adapt(a => if a != es.last then s.set(a))
@@ -81,4 +81,4 @@ extension[A] (es: Source[A])
       es.adapt(a => {
         if last.fold(true)(_ != a) then s.set(a)
         newValue(a)
-      })
+      })*/

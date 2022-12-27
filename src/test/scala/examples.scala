@@ -19,6 +19,7 @@ class FibVariants extends FunSuite:
   }
 
 
+/*
 class FizzBuzzVariants extends FunSuite:
   val factor1 = 3
   val factor2 = 5
@@ -87,3 +88,4 @@ class FizzBuzzVariants extends FunSuite:
 //    assert(result() == fizzbuzz)
 //  }
 
+*/

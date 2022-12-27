@@ -1,6 +1,7 @@
 package be.adamv.momentum
 
 
+/*
 extension [A](self: Source[A])
   infix def combineLeftBuffered[B](other: Source[B]): Source[(A, B)] & RBuffered[(A, B)] = new Source[(A, B)] with ConcreteBuffered[(A, B)]:
     var l: A = _
@@ -43,3 +44,4 @@ extension [A](self: Source[A] & RBuffered[A])
   infix def combineRight[B](other: Source[B]): Source[(A, B)] =
     (s: Sink[(A, B)]) =>
       other.adapt(b => self.last.foreach(a => s.set(a, b)))
+*/

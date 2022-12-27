@@ -2,16 +2,18 @@ package be.adamv.momentum
 package concrete
 
 
-class Relay[A] extends ConcreteBuffered[A] with Sink[A] with Source[A]:
-  private val subs = collection.mutable.Stack[Sink[A]]()
+// In-order buffered
+class Relay[A] extends ConcreteBuffered[A]:
+  private val subs = collection.mutable.Stack.empty[Setter[A, _]]
 
-  def adapt(s: Sink[A]): this.type =
+  val adaptor: SetAdaptor[A, Unit] = (s: Setter[A, _]) =>
     subs.addOne(s)
-    this
-  def set(a: A): Unit =
-    subs.foreach(_.set(a))
+
+  val setter: Setter[A, Unit] = (a: A) =>
+    subs.foreach(_(a))
     _last = Some(a)
 
+/*
 object Relay:
   def inOrderDrop[V](srcs: List[Source[V]]): RBuffered[V] & Source[V] =
     new Relay[V]:
@@ -46,3 +48,4 @@ object Relay:
             set(v)
             k = i
         })
+*/
