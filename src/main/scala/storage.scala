@@ -37,6 +37,21 @@ trait ConcreteTraced[A] extends RTraced[A], WTraced[A]:
   def history(i: Int): Option[A] = Option.when(i < trace.length)(trace(i))
   def newValue(a: A): Unit = trace.push(a)
 
+
+extension [A, E](sadapt: SetAdaptor[A, E])(using d: Default[E])
+  def buffered: SetAdaptor[A, E] & RBuffered[A] = new SetAdaptor[A, E] with ConcreteBuffered[A]:
+    def apply(s: Setter[A, E]): E =
+      sadapt(a => {
+        if last.fold(true)(_ != a) then
+          val e = s(a)
+          newValue(a)
+          e
+        else
+          newValue(a)
+          d.value
+      })
+
+
 /*extension [A](es: RBuffered[A] & Source[A])
   def dedup: RBuffered[A] & Source[A] = new Source[A] with ConcreteBuffered[A]:
     override def adapt(s: Sink[A]): Source[_] =

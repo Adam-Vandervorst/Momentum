@@ -13,7 +13,7 @@ package util:
   def trace[T](xs: ListBuffer[T]): Setter[T, Unit] =
     (x: T) => xs.addOne(x)
 
-  def callback[T]: (SetAdaptor[T, Unit], Setter[T, Unit]) =
+  def callback[T]: (SetAdaptor[T, Unit] & RBuffered[T], Setter[T, Unit]) =
     val r = new Relay[T]
     (r.adaptor, r.setter)
 

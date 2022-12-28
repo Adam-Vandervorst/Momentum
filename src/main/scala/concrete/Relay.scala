@@ -4,14 +4,19 @@ package concrete
 
 // In-order buffered
 class Relay[A] extends ConcreteBuffered[A]:
+  self =>
   private val subs = collection.mutable.Stack.empty[Setter[A, _]]
 
-  val adaptor: SetAdaptor[A, Unit] = (s: Setter[A, _]) =>
-    subs.addOne(s)
+  val adaptor: SetAdaptor[A, Unit] & RBuffered[A] = new SetAdaptor[A, Unit] with RBuffered[A]:
+    override def apply(s: Setter[A, Unit]): Unit =
+      subs.addOne(s)
+
+    override def last: Option[A] = self.last
 
   val setter: Setter[A, Unit] = (a: A) =>
     subs.foreach(_(a))
     _last = Some(a)
+
 
 /*
 object Relay:

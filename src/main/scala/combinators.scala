@@ -1,6 +1,25 @@
 package be.adamv.momentum
 
 
+extension [A, E](self: Setter[A, E])
+  infix def setBoth[B](other: Setter[B, E]): Setter[(A, B), E] =
+    (p: (A, B)) =>
+      self(p._1)
+      other(p._2)
+
+
+extension [A, E](self: SetAdaptor[A, E])(using d: Default[E])
+  infix def zipLeft[B](other: SetAdaptor[B, E] & RBuffered[B]): SetAdaptor[(A, B), E] =
+    (sset: Setter[(A, B), E]) =>
+      other(b => d.value)
+      self(a => { if other.last.nonEmpty then sset(a, other.last.get) else d.value })
+
+extension [A, E](self: SetAdaptor[A, E] & RBuffered[A])(using d: Default[E])
+  inline infix def zipRight[B](other: SetAdaptor[B, E]): SetAdaptor[(A, B), E] =
+    (sset: Setter[(A, B), E]) =>
+      self(a => d.value)
+      other(b => { if self.last.nonEmpty then sset(self.last.get, b) else d.value })
+
 /*
 extension [A](self: Source[A])
   infix def combineLeftBuffered[B](other: Source[B]): Source[(A, B)] & RBuffered[(A, B)] = new Source[(A, B)] with ConcreteBuffered[(A, B)]:

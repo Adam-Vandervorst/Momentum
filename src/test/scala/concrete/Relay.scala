@@ -40,3 +40,20 @@ class RelayTest extends FunSuite:
     assert(v.toSet == (a ++ b).map(_ * 2).toSet)
     assert(w.toSet == (a ++ b).map(_ / 2).toSet)
   }
+
+  test("diamond") {
+    val (numbers, feed) = callback[Int]
+    val (pairs, res) = newTrace[(Int, Boolean)]()
+    val isPositive: SetAdaptor[Boolean, Unit] & RBuffered[Boolean] = numbers.mapS[Boolean](_.contramap(_ > 0)).buffered
+    val doubledNumbers: SetAdaptor[Int, Unit] & RBuffered[Int] = numbers.mapS[Int](_.contramap(_ * 2)).buffered
+    val combinedStream: SetAdaptor[(Int, Boolean), Unit] = doubledNumbers.zipLeft(isPositive)
+    combinedStream(pairs)
+    feed(-1)
+    feed(1)
+    assert(res() == List((-2, false), (2, true)))
+  }
+
+class LazyRelay extends FunSuite:
+  test("diamond") {
+
+  }
