@@ -1,21 +1,21 @@
 package be.adamv.momentum
 package concrete
 
-
-// In-order buffered
-class Relay[A] extends ConcreteBuffered[A]:
-  self =>
-  private val subs = collection.mutable.Stack.empty[Setter[A, _]]
-
-  val adaptor: SetAdaptor[A, Unit] & RBuffered[A] = new SetAdaptor[A, Unit] with RBuffered[A]:
-    override def apply(s: Setter[A, Unit]): Unit =
-      subs.addOne(s)
-
-    override def last: Option[A] = self.last
-
-  val setter: Setter[A, Unit] = (a: A) =>
-    subs.foreach(_(a))
-    _last = Some(a)
+//
+//// In-order buffered
+//class Relay[A] extends ConcreteBuffered[A]:
+//  self =>
+//  private val subs = collection.mutable.Stack.empty[Sink[A, _]]
+//
+//  val adaptor: Producer[A, Unit] & RBuffered[A] = new Producer[A, Unit] with RBuffered[A]:
+//    override def apply(s: Sink[A, Unit]): Unit =
+//      subs.addOne(s)
+//
+//    override def last: Option[A] = self.last
+//
+//  val setter: Sink[A, Unit] = (a: A) =>
+//    subs.foreach(_(a))
+//    _last = Some(a)
 
 
 /*

@@ -38,18 +38,18 @@ trait ConcreteTraced[A] extends RTraced[A], WTraced[A]:
   def newValue(a: A): Unit = trace.push(a)
 
 
-extension [A, E](sadapt: SetAdaptor[A, E])(using d: Default[E])
-  def buffered: SetAdaptor[A, E] & RBuffered[A] = new SetAdaptor[A, E] with ConcreteBuffered[A]:
-    def apply(s: Setter[A, E]): E =
-      sadapt(a => {
-        if last.fold(true)(_ != a) then
-          val e = s(a)
-          newValue(a)
-          e
-        else
-          newValue(a)
-          d.value
-      })
+//extension [A, E] (sadapt: Producer[A, E])(using d: Default[E])
+//  def buffered: Producer[A, E] & RBuffered[A] = new Producer[A, E] with ConcreteBuffered[A]:
+//    def apply(s: Sink[A, E]): E =
+//      sadapt(a => {
+//        if last.fold(true)(_ != a) then
+//          val e = s(a)
+//          newValue(a)
+//          e
+//        else
+//          newValue(a)
+//          d.value
+//      })
 
 
 /*extension [A](es: RBuffered[A] & Source[A])

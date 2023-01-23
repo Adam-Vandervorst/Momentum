@@ -1,21 +1,22 @@
 package be.adamv.momentum
 
 
-type Setter[-A, E] = A => E
+trait Sink[-A, E]:
+  set =>
+  def apply(a: A): E
 
-extension [A, E](set: A => E)
-  inline def eachTapped[AA <: A](f: AA => Unit): Setter[AA, E] =
+  def eachTapped[AA <: A](f: AA => Unit): Sink[AA, E] =
     (a: AA) =>
       f(a)
       set(a)
 
-  inline def contramapTo[B](a: => A): Setter[B, E] =
+  def contramapTo[B](a: => A): Sink[B, E] =
     (b: B) => set(a)
 
-  inline def contramap[B](f: B => A): Setter[B, E] =
+  def contramap[B](f: B => A): Sink[B, E] =
     (b: B) => set(f(b))
 
-  inline def scan[B, AA <: A](z: AA)(op: (AA, B) => AA): Setter[B, E] =
+  def scan[B, AA <: A](z: AA)(op: (AA, B) => AA): Sink[B, E] =
     var state: AA = z
     set(state)
     (b: B) =>
@@ -23,11 +24,11 @@ extension [A, E](set: A => E)
       set(state)
 
 
-extension [A, E](sset: Setter[A, E])(using inline d: Default[E])
-  inline def contrafilter[AA <: A](f: AA => Boolean): Setter[AA, E] =
+extension [A, E] (sset: Sink[A, E])(using inline d: Default[E])
+  inline def contrafilter[AA <: A](f: AA => Boolean): Sink[AA, E] =
     (a: AA) => if f(a) then sset(a) else d.value
 
-  inline def contracollect[B](pf: PartialFunction[B, A]): Setter[B, E] =
+  inline def contracollect[B](pf: PartialFunction[B, A]): Sink[B, E] =
     { case pf(a) => sset(a); case _ => d.value }
 
 

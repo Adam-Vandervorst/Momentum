@@ -1,10 +1,10 @@
 package be.adamv.momentum
 
 
-extension (ticker: Setter[Unit, _])
+extension (ticker: Sink[Unit, _])
   def tick(): Unit = ticker(())
 
-
-extension [X, R](sadapt: SetAdaptor[X, R])
-  transparent inline def -->(s: Setter[X, R]): R =
-    sadapt(s)
+//
+//extension [X, R](sadapt: Producer[X, R])
+//  transparent inline def -->(s: Sink[X, R]): R =
+//    sadapt(s)

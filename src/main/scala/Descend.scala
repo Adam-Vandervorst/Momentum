@@ -1,13 +1,24 @@
 package be.adamv.momentum
 
 
-type SetAdaptor[+A, R] = Setter[A, R] => R
+@FunctionalInterface
+trait Descend[-R, +A, E]:
+  def adapt(s: Sink[A, E]): Sink[R, E]
 
-extension [A, R](sadapt: SetAdaptor[A, R])
-  inline def mapS[B](inline f: Setter[B, R] => Setter[A, R]): SetAdaptor[B, R] =
-    (s: Setter[B, R]) => sadapt(f(s))
+  def map[B](f: A => B): Descend[R, B, E] =
+    (s: Sink[B, E]) => adapt(a => s(f(a)))
 
-  /*
+
+trait DescendFactory[D[r, a, e] <: Descend[r, a, e]]:
+  def start[A, E]: D[A, A, E]
+  def continuing[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E]
+
+object Descend extends DescendFactory[Descend]:
+  def start[A, E]: Descend[A, A, E] = identity
+  def continuing[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E] = descend
+
+
+/*
   def buffered: SetAdaptor[A, R] & RBuffered[A] = new SetAdaptor[A, R] with ConcreteBuffered[A]:
     def apply(sset: Setter[A, _]): R =
       sadapt(a => {
