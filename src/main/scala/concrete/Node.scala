@@ -45,12 +45,14 @@ def distribute(c: Tuple, combined: List[String], left: List[String], right: List
     distribute(c.drop(1), t,
       if left.headOption.contains(h) then left.tail else left,
       if right.headOption.contains(h) then right.tail else right,
-      if left.headOption.contains(h) then l :* c.take(1) else l,
-      if right.headOption.contains(h) then r :* c.take(1) else r)
+      if left.headOption.contains(h) then l :* c.asInstanceOf[NonEmptyTuple].head else l,
+      if right.headOption.contains(h) then r :* c.asInstanceOf[NonEmptyTuple].head else r)
 
 inline def splitTuple[R <: Tuple, S <: Tuple](c: MergeTuple[R, S]): (R, S) =
-//      println(s"c: ${c}, tags: ${tags[MergeTuple[R, S]]}, ${tags[LiftTuple[R]]}, ${tags[LiftTuple[S]]}")
+//  println(s"c: ${c}, tags: ${tags[MergeTuple[R, S]]}, ${tags[R]}, ${tags[S]}")
 //      println(distribute(c, tags[MergeTuple[R, S]], tags[LiftTuple[R]], tags[LiftTuple[S]]))
+//  val (l, r) = distribute(c, tags[MergeTuple[R, S]], tags[R], tags[S]).asInstanceOf[(R, S)]
+//  println(s"l: ${l}, r: ${r}")
   distribute(c, tags[MergeTuple[R, S]], tags[R], tags[S]).asInstanceOf[(R, S)]
 
 
