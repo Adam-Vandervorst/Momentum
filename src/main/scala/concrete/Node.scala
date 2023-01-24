@@ -1,6 +1,48 @@
 package be.adamv.momentum
 package concrete
 
+
+import compiletime.{constValue, constValueTuple, erasedValue}
+import compiletime.ops.int.S
+import compiletime.ops.any.{==, !=}
+import Tags.Value
+
+
+// TODO hack
+type IdentityTuple[X] <: Tuple = X match
+  case EmptyTuple =>  EmptyTuple
+  case *:[v, EmptyTuple] => v *: EmptyTuple
+  case *:[v1, *:[v2, EmptyTuple]] => v1 *: v2 *: EmptyTuple
+  case *:[v1, *:[v2, *:[v3, EmptyTuple]]] => v1 *: v2 *: v3 *: EmptyTuple
+// TODO hack
+type LiftTuple[X] = X & Tuple
+type TagOf[V] <: String = V match
+  case Value[_, s] => s
+type IndexWhere[Tup <: Tuple, P[_] <: Boolean, Pos <: Int] <: Int = Tup match
+  case EmptyTuple => Pos
+  case *:[h, t] => P[h] match
+    case true => Pos
+    case false => IndexWhere[t, P, S[Pos]]
+type FilterOnIndex[Tup <: Tuple, P[_ <: Tuple.Union[Tup], _ <: Int] <: Boolean, Pos <: Int] <: Tuple = Tup match
+  case EmptyTuple => EmptyTuple
+  case *:[h, t] => P[h, Pos] match
+    case true => h *: FilterOnIndex[t, P, S[Pos]]
+    case false => FilterOnIndex[t, P, S[Pos]]
+type Dedup[Tup <: Tuple] = FilterOnIndex[Tup, [X, I <: Int] =>> I == IndexWhere[Tup, [Y] =>> TagOf[X] == TagOf[Y], 0], 0]
+// TODO Tuple.Map with identity is a hack to force evaluation
+type MergeTuple[x, y] = Tuple.Map[Dedup[Tuple.Concat[IdentityTuple[x], IdentityTuple[y]]], [X] =>> X]
+
+inline def tags[Tup <: Tuple]: List[String] = inline erasedValue[Tup] match
+  case _: EmptyTuple => Nil
+//  case _: *:[v, EmptyTuple] => constValue[TagS[v]] :: Nil
+//  case _: *:[v1, *:[v2, EmptyTuple]] => constValue[TagS[v1]]::constValue[TagS[v2]] :: Nil
+//  case _: *:[v1, *:[v2, *:[v3, EmptyTuple]]] => constValue[TagS[v1]]::constValue[TagS[v2]]::constValue[TagS[v3]] :: Nil
+  case _: Tuple1[v] => constValue[TagOf[v]] :: Nil
+  case _: Tuple2[v1, v2] => constValue[TagOf[v1]] :: constValue[TagOf[v2]] :: Nil
+  case _: Tuple3[v1, v2, v3] => constValue[TagOf[v1]] :: constValue[TagOf[v2]] :: constValue[TagOf[v3]] :: Nil
+//  case _: (*:[v, tt]) => constValue[TagS[v]] :: tags[tt]
+
+
 class Node[R, A, E] extends Descend[R, A, E]:
   self =>
   val index: Int = 0
@@ -64,49 +106,25 @@ class Node[R, A, E] extends Descend[R, A, E]:
   inline infix def merge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[(R, S), (A, B), E] =
     self.mergeWith[S, B, (A, B), (R, S)](Tuple2.apply, identity)(other)
 
-  import compiletime.{constValue, constValueTuple, erasedValue}
-  import compiletime.ops.int.S
-  import compiletime.ops.any.{==, !=}
-  import Tags.Value
-  type AssumeTuple[X] <: Tuple = X match
-//    case Value[t, s] => X *: EmptyTuple
-    case Value[t, s] => Tuple1[X]
-    case Tuple1[t1] => Tuple1[t1]
-    case (t1, t2) => (t1, t2)
-    case (t1, t2, t3) => (t1, t2, t3)
-  type TagOf[V] <: String = V match
-    case Value[_, s] => s
-  type IndexWhere[Tup <: Tuple, P[_] <: Boolean, Pos <: Int] <: Int = Tup match
-    case EmptyTuple => Pos
-    case *:[h, t] => P[h] match
-      case true => Pos
-      case false => IndexWhere[t, P, S[Pos]]
-  type FilterOnIndex[Tup <: Tuple, P[_ <: Tuple.Union[Tup], _ <: Int] <: Boolean, Pos <: Int] <: Tuple = Tup match
-    case EmptyTuple => EmptyTuple
-    case *:[h, t] => P[h, Pos] match
-      case true => h *: FilterOnIndex[t, P, S[Pos]]
-      case false => FilterOnIndex[t, P, S[Pos]]
-  type Dedup[Tup <: Tuple] = FilterOnIndex[Tup, [X, I] =>> I == IndexWhere[Tup, [Y] =>> X == Y, -1], 0]
-  type MergeTuple[x, y] = Dedup[Tuple.Concat[AssumeTuple[x], AssumeTuple[y]]]
-  inline def filterOnType[Tup <: Tuple, P[_] <: Boolean](tup: Tup): Tuple.Filter[Tup, P] = inline tup match
-    case EmptyTuple => EmptyTuple.asInstanceOf
-    case c: (*:[ht, tt]) => inline if constValue[P[ht]]
-      then (c.head *: filterOnType[tt, P](c.tail)).asInstanceOf
-      else filterOnType[tt, P](c.tail).asInstanceOf
-
-  inline def tags[Tup <: Tuple]: List[String] = inline erasedValue[Tup] match
-    case _: EmptyTuple => Nil
-    case _: Tuple1[Value[_, s0]] => constValue[s0]::Nil
-//    case _: Tuple2[Value[_, s0], Value[_, s1]] => constValue[s0]::constValue[s1]::Nil
-//    case _: Tuple3[Value[_, s0], Value[_, s1], Value[_, s2]] => constValue[s0]::constValue[s1]::constValue[s2]::Nil
-//    case _: (*:[Value[_, s], tt]) => constValue[s] :: tags[tt]
+  def distribute(c: Tuple, combined: List[String], left: List[String], right: List[String],
+                 l: Tuple = EmptyTuple, r: Tuple = EmptyTuple): (Tuple, Tuple) = combined match
+    case Nil =>
+      assert(c.size == 0)
+      assert(left.isEmpty && right.isEmpty)
+      (l, r)
+    case h::t =>
+      // TODO simplify
+      distribute(c.drop(1), t,
+        if left.headOption.contains(h) then left.tail else left,
+        if right.headOption.contains(h) then right.tail else right,
+        if left.headOption.contains(h) then l :* c.take(1) else l,
+        if right.headOption.contains(h) then r :* c.take(1) else r)
 
   inline infix def smartMerge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], (A, B), E] =
     self.parallel[S, B, [a, b] =>> (a, b), [r, s] =>> MergeTuple[r, s]](Tuple2.apply, { c =>
-//      println(s"c: ${c}, tags: ${tags[Tuple1[Value[Int, "t1"]]]}")
-      ???
-//      (filterOnType[MergeTuple[R, S], [X] =>> -1 != IndexWhere[AssumeTuple[R], [Y] =>> X == Y, -1]](c).asInstanceOf[R],
-//        filterOnType[MergeTuple[R, S], [X] =>> -1 != IndexWhere[AssumeTuple[S], [Y] =>> X == Y, -1]](c).asInstanceOf[S])
+//      println(s"c: ${c}, tags: ${tags[MergeTuple[R, S]]}, ${tags[LiftTuple[R]]}, ${tags[LiftTuple[S]]}")
+//      println(distribute(c, tags[MergeTuple[R, S]], tags[LiftTuple[R]], tags[LiftTuple[S]]))
+      distribute(c, tags[MergeTuple[R, S]], tags[LiftTuple[R]], tags[LiftTuple[S]]).asInstanceOf[(R, S)]
     })(other)
 
 
