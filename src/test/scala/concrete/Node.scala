@@ -60,7 +60,7 @@ class NodeTest extends FunSuite:
     val (trace, res) = newTrace[Any]()
     val ls = la.adapt(trace)
 
-    ls(1, 2, 3)
+    ls.apply("a" -> 1, "b" -> 2, "c" -> 3)
     assert(res() == List("a: 11  b: 2  c: 3"))
   }
 
