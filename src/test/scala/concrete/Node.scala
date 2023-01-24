@@ -11,19 +11,19 @@ import scala.collection.mutable.ListBuffer
 
 
 class NodeTest extends FunSuite:
-//  test("basic map merge") {
-//    val numbers = Node.start[Int, Unit]
-//    val double = numbers.map(_*2)
-//    val isPositive = numbers.map(_ > 0)
-//    val combined = double merge isPositive
-//
-//    val (trace, res) = newTrace[Any]()
-//    val feed = combined.adapt(trace)
-//
-//    feed(-1)
-//    feed(1)
-//    assert(res() == List((-2, false), (2, true)))
-//  }
+  test("basic map merge") {
+    val numbers = Node.named[Int, Unit]("a")
+    val double = numbers.map(_*2)
+    val isPositive = numbers.map(_ > 0)
+    val combined = double smartMerge isPositive
+
+    val (trace, res) = newTrace[Any]()
+    val feed = combined.adapt(trace)
+
+    feed.applySingle(-1)
+    feed.applySingle(1)
+    assert(res() == List((-2, false), (2, true)))
+  }
 //
 //  test("basic chain map merge") {
 //    val numbers = Node.start[Int, Unit]

@@ -71,9 +71,9 @@ class Node[R, A, E] extends Descend[R, A, E]:
   def parallel[S, B, F[_, _], CF[_, _]](
     op: (A, B) => F[A, B],
     coop: CF[R, S] => (R, S))(
-    other: Node[S, B, E])(
-    using d: Default[E], m: Merge[E],
-          ): Node[CF[R, S], F[A, B], E] = new:
+    other: Node[S, B, E])(using 
+    d: Default[E], 
+    m: Merge[E]): Node[CF[R, S], F[A, B], E] = new:
     override val index: Int = (self.index max other.index) + 1
 
     override def adapt(s: Sink[F[A, B], E]): Sink[CF[R, S], E] =
@@ -94,27 +94,8 @@ class Node[R, A, E] extends Descend[R, A, E]:
           val (r, s) = coop(t)
           m.merge(selfs(r), others(s))
 
-
-  def mergeWith[S, B, C, T](op: (A, B) => C, coop: T => (R, S))(other: Node[S, B, E])(using d: Default[E], m: Merge[E]): Node[T, C, E] = new:
-    override val index: Int = (self.index max other.index) + 1
-
-    override def adapt(s: Sink[C, E]): Sink[T, E] =
-      if self.index > other.index then
-//        println(s"here ${self.index} ${other.index}")
-        var vb: Option[B] = None
-        val others = other.adapt(b => {vb = Some(b); d.value})
-        val selfs = self.adapt(a => s(op(a, vb.get)))
-        t =>
-          val (r, s) = coop(t)
-          {val o = others(s); m.merge(selfs(r), o)}
-      else
-//        println(s"there ${self.index} ${other.index}")
-        var va: Option[A] = None
-        val selfs = self.adapt(a => {va = Some(a); d.value})
-        val others = other.adapt(b => s(op(va.get, b)))
-        t =>
-          val (r, s) = coop(t)
-          m.merge(selfs(r), others(s))
+  def mergeWith[S, B, C, T](op: (A, B) => C, coop: T => (R, S))(other: Node[S, B, E])(using Default[E], Merge[E]): Node[T, C, E] =
+    parallel[S, B, [_, _] =>> C, [_, _] =>> T](op, coop)(other)
 
   inline infix def merge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[(R, S), (A, B), E] =
     self.mergeWith[S, B, (A, B), (R, S)](Tuple2.apply, identity)(other)

@@ -1,5 +1,6 @@
 package be.adamv.momentum
 
+import scala.compiletime.constValue
 
 trait Default[E]:
   def value: E
