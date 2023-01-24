@@ -9,13 +9,7 @@ import Tags.Value
 
 
 // TODO hack
-type IdentityTuple[X] <: Tuple = X match
-  case EmptyTuple =>  EmptyTuple
-  case *:[v, EmptyTuple] => v *: EmptyTuple
-  case *:[v1, *:[v2, EmptyTuple]] => v1 *: v2 *: EmptyTuple
-  case *:[v1, *:[v2, *:[v3, EmptyTuple]]] => v1 *: v2 *: v3 *: EmptyTuple
-// TODO hack
-type LiftTuple[X] = X & Tuple
+type AssumeTuple[X] = X & Tuple
 type TagOf[V] <: String = V match
   case Value[_, s] => s
 type IndexWhere[Tup <: Tuple, P[_] <: Boolean, Pos <: Int] <: Int = Tup match
@@ -30,17 +24,34 @@ type FilterOnIndex[Tup <: Tuple, P[_ <: Tuple.Union[Tup], _ <: Int] <: Boolean, 
     case false => FilterOnIndex[t, P, S[Pos]]
 type Dedup[Tup <: Tuple] = FilterOnIndex[Tup, [X, I <: Int] =>> I == IndexWhere[Tup, [Y] =>> TagOf[X] == TagOf[Y], 0], 0]
 // TODO Tuple.Map with identity is a hack to force evaluation
-type MergeTuple[x, y] = Tuple.Map[Dedup[Tuple.Concat[IdentityTuple[x], IdentityTuple[y]]], [X] =>> X]
+type MergeTuple[x <: Tuple, y <: Tuple] = Dedup[Tuple.Concat[x, y]]
 
+// TODO the following three functions could be merge, no need for the intermediate key lists
 inline def tags[Tup <: Tuple]: List[String] = inline erasedValue[Tup] match
   case _: EmptyTuple => Nil
-//  case _: *:[v, EmptyTuple] => constValue[TagS[v]] :: Nil
-//  case _: *:[v1, *:[v2, EmptyTuple]] => constValue[TagS[v1]]::constValue[TagS[v2]] :: Nil
-//  case _: *:[v1, *:[v2, *:[v3, EmptyTuple]]] => constValue[TagS[v1]]::constValue[TagS[v2]]::constValue[TagS[v3]] :: Nil
-  case _: Tuple1[v] => constValue[TagOf[v]] :: Nil
-  case _: Tuple2[v1, v2] => constValue[TagOf[v1]] :: constValue[TagOf[v2]] :: Nil
-  case _: Tuple3[v1, v2, v3] => constValue[TagOf[v1]] :: constValue[TagOf[v2]] :: constValue[TagOf[v3]] :: Nil
-//  case _: (*:[v, tt]) => constValue[TagS[v]] :: tags[tt]
+  case _: *:[v, EmptyTuple] => constValue[TagOf[v]] :: Nil
+  case _: *:[v1, *:[v2, EmptyTuple]] => constValue[TagOf[v1]]::constValue[TagOf[v2]] :: Nil
+  case _: *:[v1, *:[v2, *:[v3, EmptyTuple]]] => constValue[TagOf[v1]]::constValue[TagOf[v2]]::constValue[TagOf[v3]] :: Nil
+
+// TODO this could be done at compiletime for 90%
+def distribute(c: Tuple, combined: List[String], left: List[String], right: List[String],
+               l: Tuple = EmptyTuple, r: Tuple = EmptyTuple): (Tuple, Tuple) = combined match
+  case Nil =>
+    assert(c.size == 0)
+    assert(left.isEmpty && right.isEmpty)
+    (l, r)
+  case h :: t =>
+    // TODO simplify
+    distribute(c.drop(1), t,
+      if left.headOption.contains(h) then left.tail else left,
+      if right.headOption.contains(h) then right.tail else right,
+      if left.headOption.contains(h) then l :* c.take(1) else l,
+      if right.headOption.contains(h) then r :* c.take(1) else r)
+
+inline def splitTuple[R <: Tuple, S <: Tuple](c: MergeTuple[R, S]): (R, S) =
+//      println(s"c: ${c}, tags: ${tags[MergeTuple[R, S]]}, ${tags[LiftTuple[R]]}, ${tags[LiftTuple[S]]}")
+//      println(distribute(c, tags[MergeTuple[R, S]], tags[LiftTuple[R]], tags[LiftTuple[S]]))
+  distribute(c, tags[MergeTuple[R, S]], tags[R], tags[S]).asInstanceOf[(R, S)]
 
 
 class Node[R, A, E] extends Descend[R, A, E]:
@@ -106,26 +117,8 @@ class Node[R, A, E] extends Descend[R, A, E]:
   inline infix def merge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[(R, S), (A, B), E] =
     self.mergeWith[S, B, (A, B), (R, S)](Tuple2.apply, identity)(other)
 
-  def distribute(c: Tuple, combined: List[String], left: List[String], right: List[String],
-                 l: Tuple = EmptyTuple, r: Tuple = EmptyTuple): (Tuple, Tuple) = combined match
-    case Nil =>
-      assert(c.size == 0)
-      assert(left.isEmpty && right.isEmpty)
-      (l, r)
-    case h::t =>
-      // TODO simplify
-      distribute(c.drop(1), t,
-        if left.headOption.contains(h) then left.tail else left,
-        if right.headOption.contains(h) then right.tail else right,
-        if left.headOption.contains(h) then l :* c.take(1) else l,
-        if right.headOption.contains(h) then r :* c.take(1) else r)
-
-  inline infix def smartMerge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], (A, B), E] =
-    self.parallel[S, B, [a, b] =>> (a, b), [r, s] =>> MergeTuple[r, s]](Tuple2.apply, { c =>
-//      println(s"c: ${c}, tags: ${tags[MergeTuple[R, S]]}, ${tags[LiftTuple[R]]}, ${tags[LiftTuple[S]]}")
-//      println(distribute(c, tags[MergeTuple[R, S]], tags[LiftTuple[R]], tags[LiftTuple[S]]))
-      distribute(c, tags[MergeTuple[R, S]], tags[LiftTuple[R]], tags[LiftTuple[S]]).asInstanceOf[(R, S)]
-    })(other)
+  inline infix def smartMerge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[AssumeTuple[R], AssumeTuple[S]], (A, B), E] =
+    self.parallel[S, B, Tuple2, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](Tuple2(_, _), splitTuple(_))(other)
 
 
 object Node extends DescendFactory[Node]:
