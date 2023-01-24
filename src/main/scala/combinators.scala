@@ -1,46 +1,15 @@
 package be.adamv.momentum
 
-object macros:
-  import scala.quoted.{Type, Quotes, Expr}
-  def showTImpl[T : Type](using q: Quotes): Expr[String] =
-    import q.reflect.{TypeTree, TypeRepr}
-    Expr(TypeRepr.of[T].show)
 
 object Tags:
-  import scala.compiletime.{constValue, erasedValue}
-
-  opaque type Ref[T, S <: String & Singleton] = S
   opaque type Value[+T, S <: String & Singleton] = T
 
-  inline def require[T, S <: String & Singleton]: Ref[T, S] = constValue[S]
-  inline def provide[T, S <: String & Singleton](t: T): Value[T, S] = t
+  import scala.language.implicitConversions
 
-//  extension[T, S <: String & Singleton] (ref: Ref[T, S])
-//    inline def fill(t: T): Value[T, S] = provide(t)
+  inline given [T, S <: String & Singleton]: Conversion[Value[T, S], T] = identity
+  inline given [T, S <: String & Singleton]: Conversion[T, Value[T, S]] = identity
 
-
-//  inline def provideTup[T, S <: String & Singleton](t: T): Value[T, S] *: EmptyTuple = t *: EmptyTuple
-
-  //  inline def instantiate[T, S <: String & Singleton](v: Value[T, S]): Unit = ()
-
-//  inline def transform[Tup <: Tuple](tset: Tup): TSet[Tup, Tuple.Union[Tup]] = tset
-
-//  inline def feedAll[S1 <: String & Singleton, S2 <: String & Singleton](
-//                                                                          tup: (Value[Any, S1], Value[Any, S2])): Map[String, Any] = inline tup match
-//    case (v1, v2) => Map(constValue[S1] -> v1, constValue[S2] -> v2)
-//  inline def feedAll[S1 <: String & Singleton, S2 <: String & Singleton, S3 <: String & Singleton](
-//                                                                                                    tup: (Value[Any, S1], Value[Any, S2], Value[Any, S3])): Map[String, Any] = inline tup match
-//    case (v1, v2, v3) => Map(constValue[S1] -> v1, constValue[S2] -> v2, constValue[S3] -> v3)
-
-//  inline def allTags[S1 <: String & Singleton]: List[String] = inline erasedValue[] match
-//    case (v1, v2) => Map(constValue[S1] -> v1, constValue[S2] -> v2)
-//  inline def feedAll[S1 <: String & Singleton, S2 <: String & Singleton](
-//                                                                          tup: (Value[Any, S1], Value[Any, S2])): Map[String, Any] = inline tup match
-//    case (v1, v2) => Map(constValue[S1] -> v1, constValue[S2] -> v2)
-//
-//  inline def feedAll[S1 <: String & Singleton, S2 <: String & Singleton, S3 <: String & Singleton](
-//                                                                                                    tup: (Value[Any, S1], Value[Any, S2], Value[Any, S3])): Map[String, Any] = inline tup match
-//    case (v1, v2, v3) => Map(constValue[S1] -> v1, constValue[S2] -> v2, constValue[S3] -> v3)
+  inline def name[S <: String & Singleton](t: Any): Value[t.type, S] = t
 
 
 extension [A, E](self: Sink[A, E])

@@ -78,7 +78,7 @@ class Node[R, A, E] extends Descend[R, A, E]:
 
     override def adapt(s: Sink[F[A, B], E]): Sink[CF[R, S], E] =
       if self.index > other.index then
-        println(s"here ${self.index} ${other.index}")
+//        println(s"here ${self.index} ${other.index}")
         var vb: Option[B] = None
         val others = other.adapt(b => {vb = Some(b); d.value})
         val selfs = self.adapt(a => s(op(a, vb.get)))
@@ -86,7 +86,7 @@ class Node[R, A, E] extends Descend[R, A, E]:
           val (r, s) = coop(t)
           {val o = others(s); m.merge(selfs(r), o)}
       else
-        println(s"there ${self.index} ${other.index}")
+//        println(s"there ${self.index} ${other.index}")
         var va: Option[A] = None
         val selfs = self.adapt(a => {va = Some(a); d.value})
         val others = other.adapt(b => s(op(va.get, b)))
@@ -100,7 +100,7 @@ class Node[R, A, E] extends Descend[R, A, E]:
 
     override def adapt(s: Sink[C, E]): Sink[T, E] =
       if self.index > other.index then
-        println(s"here ${self.index} ${other.index}")
+//        println(s"here ${self.index} ${other.index}")
         var vb: Option[B] = None
         val others = other.adapt(b => {vb = Some(b); d.value})
         val selfs = self.adapt(a => s(op(a, vb.get)))
@@ -108,7 +108,7 @@ class Node[R, A, E] extends Descend[R, A, E]:
           val (r, s) = coop(t)
           {val o = others(s); m.merge(selfs(r), o)}
       else
-        println(s"there ${self.index} ${other.index}")
+//        println(s"there ${self.index} ${other.index}")
         var va: Option[A] = None
         val selfs = self.adapt(a => {va = Some(a); d.value})
         val others = other.adapt(b => s(op(va.get, b)))
@@ -119,11 +119,15 @@ class Node[R, A, E] extends Descend[R, A, E]:
   inline infix def merge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[(R, S), (A, B), E] =
     self.mergeWith[S, B, (A, B), (R, S)](Tuple2.apply, identity)(other)
 
-  inline infix def smartMerge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[AssumeTuple[R], AssumeTuple[S]], (A, B), E] =
-    self.parallel[S, B, Tuple2, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](Tuple2(_, _), splitTuple(_))(other)
+extension [R <: Tuple, A, E](n: Node[R, A, E])
+  inline infix def smartMerge[S <: Tuple, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], (A, B), E] =
+    n.parallel[S, B, Tuple2, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](Tuple2(_, _), splitTuple(_))(other)
 
 
 object Node extends DescendFactory[Node]:
+  inline def named[A, E](n: String): Node[Value[A, n.type] *: EmptyTuple, A, E] = new Node:
+    override def adapt(s: Sink[A, E]): Sink[Value[A, n.type] *: EmptyTuple, E] = s.contramap(_.head)
+
   override def start[A, E]: Node[A, A, E] = new Node:
     override def adapt(s: Sink[A, E]): Sink[A, E] = s
 

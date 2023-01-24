@@ -2,25 +2,13 @@ package be.adamv.momentum.test
 package concrete
 
 import be.adamv.momentum.{*, given}
+import be.adamv.momentum.Tags.*
 import be.adamv.momentum.util.*
 import be.adamv.momentum.concrete.*
 import munit.FunSuite
 
 import scala.collection.mutable.ListBuffer
 
-
-
-  //  inline def feedAllH[Tup <: Tuple](tup: Tup): Map[String, Any] = inline tup match
-//    case (v1: Value[_, s1], v2: Value[_, s2]) => Map(constValue[s1] -> v1, constValue[s2] -> v2)
-
-//  transparent inline def feedAll[Tup <: Tuple](tup: Tup): Map[String, String] = inline tup match
-//     case c: (*:[Value[_, s], t]) => feedAll(c.tail) + (c.head.toString -> constValue[s])
-//     case EmptyTuple => Map.empty[String, String]
-import be.adamv.momentum.Tags.*
-import be.adamv.momentum.macros.showTImpl
-
-
-inline def showT[T]: String = ${ showTImpl[T] }
 
 class NodeTest extends FunSuite:
 //  test("basic map merge") {
@@ -59,52 +47,21 @@ class NodeTest extends FunSuite:
 //    assert(res() == List((1,1), (10,10), (2,2), (11,11), (3,3), (12,12), (4,4), (13,13), (5,5), (14,14)))
 //  }
 
-//  test("basic merge assoc") {
-//    val numbersa = Node.start[Int, Unit]
-//    val numbersb = Node.start[Int, Unit]
-//    val numbersc = Node.start[Int, Unit]
-//
-//    val l = (numbersa merge numbersb) merge numbersc
-//    val la = l.map{ case ((a, b), c) => (a, b, c) }
-////    val ra = numbersa merge (numbersb merge numbersc)
-//
-//    val (trace, res) = newTrace[Any]()
-//    val ls = la.adapt(trace)
-//
-//    ls((1, 2, 3))
-//    println(res())
-//  }
-
 
   test("tagged") {
-    val numbersa = Node.start[Value[Int, "a"] *: EmptyTuple, Unit]
-    val numbersb = Node.start[Value[Int, "b"] *: EmptyTuple, Unit]
-    val numbersc = Node.start[Value[Int, "c"] *: EmptyTuple, Unit]
+    val numbersa = Node.named[Int, Unit]("a")
+    val numbersb = Node.named[Int, Unit]("b")
+    val numbersc = Node.named[Int, Unit]("c")
 
-//    println(showT[AssumeTuple[Value[Int, "a"]]])
-//    println(showT[Tuple.Concat[AssumeTuple[Value[Int, "a"]], AssumeTuple[Value[Int, "b"]]]])
-//    println(showT[IndexWhere[Tuple.Concat[AssumeTuple[Value[Int, "a"]], AssumeTuple[Value[Int, "b"]]], [X] =>> (TagOf[X] == TagOf[Value[Int, "a"]]), -1]])
-//    println(showT[Dedup[Tuple.Concat[AssumeTuple[Value[Int, "a"]], AssumeTuple[Value[Int, "b"]]]]])
-
-//    println(showT[MergeTuple[Value[Int, "a"], Value[Int, "b"]]])
-//    println(showT[MergeTuple[Value[Int, "a"] *: Value[Int, "c"] *: EmptyTuple, Value[Int, "b"] *: Value[Int, "c"] *: EmptyTuple]])
-
-    //    println(showT[MergeTuple[Value[Int, "a"], Tuple1[Value[Int, "b"]]]])
-    //    println(summon[(Value[Int, "a"] *: Value[Int, "b"] *: EmptyTuple) <:< MergeTuple[Value[Int, "a"], Value[Int, "b"]]])
-
-//    println(showT[be.adamv.momentum.concrete.MergeTuple[
-//      be.adamv.momentum.Tags.Value[Int, ("a")] *: EmptyTuple
-//    , be.adamv.momentum.Tags.Value[Int, ("b")] *: EmptyTuple]])
-//    inline def l1: Node[Value[Int, "a"] *: Value[Int, "b"] *: EmptyTuple, (Value[Int, "a"] *: EmptyTuple, Value[Int, "b"] *: EmptyTuple), Unit] =
-    val l = (numbersa smartMerge numbersb) smartMerge numbersc
+    val numbersma = numbersa.map(x => x + 10 )
+    val l = (numbersma smartMerge numbersb) smartMerge numbersc
     val la = l.map{ case ((a, b), c) => s"a: $a  b: $b  c: $c" }
 
     val (trace, res) = newTrace[Any]()
     val ls = la.adapt(trace)
 
-    // TODO prevent accumulating wrapping
-    ls(provide[Int, "a"](1) *: provide[Int, "b"](2) *: provide[Int, "c"](3) *: EmptyTuple)
-    println(res())
+    ls(1, 2, 3)
+    assert(res() == List("a: 11  b: 2  c: 3"))
   }
 
 //  test("tagged") {
