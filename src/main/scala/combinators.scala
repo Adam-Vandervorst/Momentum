@@ -17,8 +17,8 @@ object Tags:
 extension [A, E](self: Sink[A, E])
   infix def setBoth[B](other: Sink[B, E]): Sink[(A, B), E] =
     (p: (A, B)) =>
-      self(p._1)
-      other(p._2)
+      self.set(p._1)
+      other.set(p._2)
 
 
 //extension [A, E] (self: Producer[A, E])(using d: Default[E])

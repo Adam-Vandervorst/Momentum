@@ -9,8 +9,8 @@ type AssumeTuple[X] = X & Tuple
 
 
 package util:
-  def deplete[T](xs: Seq[T]): Descend[Unit, T, Unit] = (sset: Sink[T, Unit]) => _ =>
-    xs.foreach(sset.apply)
+  def deplete[T](xs: Seq[T]): Descend[Unit, T, Unit] = (snk: Sink[T, Unit]) => _ =>
+    xs.foreach(snk.set)
 
   def newTrace[X](): (Sink[X, Unit], () => List[X]) =
     val xs = ListBuffer.empty[X]

@@ -6,7 +6,7 @@ trait Descend[-R, +A, E]:
   def adapt(s: Sink[A, E]): Sink[R, E]
 
   def map[B](f: A => B): Descend[R, B, E] =
-    (s: Sink[B, E]) => adapt(a => s(f(a)))
+    (snk: Sink[B, E]) => adapt(a => snk.set(f(a)))
 
 
 trait DescendFactory[D[r, a, e] <: Descend[r, a, e]]:

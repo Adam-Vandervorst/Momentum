@@ -60,8 +60,8 @@ class Node[R, A, E] extends Descend[R, A, E]:
   override def map[B](f: A => B): Node[R, B, E] = new:
     override val index: Int = self.index + 1
 
-    override def adapt(s: Sink[B, E]): Sink[R, E] =
-      self.adapt((a: A) => s(f(a)))
+    override def adapt(sink: Sink[B, E]): Sink[R, E] =
+      self.adapt((a: A) => sink.set(f(a)))
 
   def parallel[S, B, F[_, _], CF[_, _]](
     op: (A, B) => F[A, B],
@@ -71,23 +71,23 @@ class Node[R, A, E] extends Descend[R, A, E]:
                           me: Merge[E]): Node[CF[R, S], F[A, B], E] = new:
     override val index: Int = (self.index max other.index) + 1
 
-    override def adapt(s: Sink[F[A, B], E]): Sink[CF[R, S], E] =
+    override def adapt(snk: Sink[F[A, B], E]): Sink[CF[R, S], E] =
       if self.index > other.index then
 //        println(s"here ${self.index} ${other.index}")
         var vb: Option[B] = None
         val others = other.adapt(b => {vb = Some(b); se.spawn()})
-        val selfs = self.adapt(a => s(op(a, vb.get)))
+        val selfs = self.adapt(a => snk.set(op(a, vb.get)))
         t =>
           val (r, s) = coop(t)
-          {val o = others(s); me.merge(selfs(r), o)}
+          {val pre = others.set(s); me.merge(selfs.set(r), pre)}
       else
 //        println(s"there ${self.index} ${other.index}")
         var va: Option[A] = None
         val selfs = self.adapt(a => {va = Some(a); se.spawn()})
-        val others = other.adapt(b => s(op(va.get, b)))
+        val others = other.adapt(b => snk.set(op(va.get, b)))
         t =>
           val (r, s) = coop(t)
-          me.merge(selfs(r), others(s))
+          {val pre = selfs.set(r); me.merge(pre, others.set(s))}
 
   inline def mergeWith[S, B, C, T](op: (A, B) => C, coop: T => (R, S))(other: Node[S, B, E])(using Spawn[E], Merge[E]): Node[T, C, E] =
     parallel[S, B, [_, _] =>> C, [_, _] =>> T](op, coop)(other)
