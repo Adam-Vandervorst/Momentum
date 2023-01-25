@@ -1,41 +1,41 @@
 package be.adamv.momentum
 
 
-trait RBuffered[A]:
-  def last: Option[A] = None
-
-trait WBuffered[A]:
-  def newValue(a: A): Unit
-
-trait ConcreteBuffered[A] extends RBuffered[A], WBuffered[A]:
-  protected var _last: Option[A] = None
-  override def last: Option[A] = _last
-  override def newValue(a: A): Unit = _last = Some(a)
-
-trait RValued[A] extends RBuffered[A]:
-  def value: A
-  override def last: Option[A] = Some(value)
-
-trait WValued[A] extends WBuffered[A]:
-  def value_=(value: A): Unit
-  override def newValue(a: A): Unit = value_=(a)
-
-trait ConcreteValued[A](protected var _value: A) extends RValued[A], WValued[A]:
-  def value: A = _value
-  def value_=(v: A): Unit = _value = v
-
-trait RTraced[A] extends RBuffered[A]:
-  override def last: Option[A] = history(0)
-  def history(i: Int): Option[A]
-
-trait WTraced[A] extends RBuffered[A]
-
-trait ConcreteTraced[A] extends RTraced[A], WTraced[A]:
-  val trace: collection.mutable.Stack[A] = collection.mutable.Stack.empty
-
-  override def last: Option[A] = trace.headOption
-  def history(i: Int): Option[A] = Option.when(i < trace.length)(trace(i))
-  def newValue(a: A): Unit = trace.push(a)
+//trait RBuffered[A]:
+//  def last: Option[A] = None
+//
+//trait WBuffered[A]:
+//  def newValue(a: A): Unit
+//
+//trait ConcreteBuffered[A] extends RBuffered[A], WBuffered[A]:
+//  protected var _last: Option[A] = None
+//  override def last: Option[A] = _last
+//  override def newValue(a: A): Unit = _last = Some(a)
+//
+//trait RValued[A] extends RBuffered[A]:
+//  def value: A
+//  override def last: Option[A] = Some(value)
+//
+//trait WValued[A] extends WBuffered[A]:
+//  def value_=(value: A): Unit
+//  override def newValue(a: A): Unit = value_=(a)
+//
+//trait ConcreteValued[A](protected var _value: A) extends RValued[A], WValued[A]:
+//  def value: A = _value
+//  def value_=(v: A): Unit = _value = v
+//
+//trait RTraced[A] extends RBuffered[A]:
+//  override def last: Option[A] = history(0)
+//  def history(i: Int): Option[A]
+//
+//trait WTraced[A] extends RBuffered[A]
+//
+//trait ConcreteTraced[A] extends RTraced[A], WTraced[A]:
+//  val trace: collection.mutable.Stack[A] = collection.mutable.Stack.empty
+//
+//  override def last: Option[A] = trace.headOption
+//  def history(i: Int): Option[A] = Option.when(i < trace.length)(trace(i))
+//  def newValue(a: A): Unit = trace.push(a)
 
 
 //extension [A, E] (sadapt: Producer[A, E])(using d: Default[E])

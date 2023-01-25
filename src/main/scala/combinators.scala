@@ -10,8 +10,8 @@ object Tags:
   inline given [T, S <: String & Singleton]: Conversion[T, Value[T, S]] = identity
 
   extension (s: String)
-    def ->(t: Any): Value[t.type, s.type] = t
-  inline def name[S <: String & Singleton](t: Any): Value[t.type, S] = t
+    inline def ->(inline t: Any): Value[t.type, s.type] = t
+  inline def name[S <: String & Singleton](inline t: Any): Value[t.type, S] = t
 
 
 extension [A, E](self: Sink[A, E])

@@ -89,7 +89,7 @@ class Node[R, A, E] extends Descend[R, A, E]:
           val (r, s) = coop(t)
           m.merge(selfs(r), others(s))
 
-  def mergeWith[S, B, C, T](op: (A, B) => C, coop: T => (R, S))(other: Node[S, B, E])(using Default[E], Merge[E]): Node[T, C, E] =
+  inline def mergeWith[S, B, C, T](op: (A, B) => C, coop: T => (R, S))(other: Node[S, B, E])(using Default[E], Merge[E]): Node[T, C, E] =
     parallel[S, B, [_, _] =>> C, [_, _] =>> T](op, coop)(other)
 
   inline infix def merge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[(R, S), (A, B), E] =
@@ -97,7 +97,7 @@ class Node[R, A, E] extends Descend[R, A, E]:
 
 extension [R <: Tuple, A, E](n: Node[R, A, E])
   // TODO AssumeTuple is valid here because we know the actual R and S going in, which are bound the be Tuples
-  inline infix def smartMergeWith[S <: Tuple, B, C](op: (A, B) => C)(other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], C, E] =
+  inline def smartMergeWith[S <: Tuple, B, C](op: (A, B) => C)(other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], C, E] =
     n.parallel[S, B, [_, _] =>> C, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](op, splitTuple(_))(other)
 
   inline infix def smartMerge[S <: Tuple, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], (A, B), E] =
