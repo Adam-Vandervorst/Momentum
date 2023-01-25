@@ -9,7 +9,6 @@ import Tags.Value
 
 
 // TODO hack
-type AssumeTuple[X] = X & Tuple
 type TagOf[V] <: String = V match
   case Value[_, s] => s
 type IndexWhere[Tup <: Tuple, P[_] <: Boolean, Pos <: Int] <: Int = Tup match
@@ -23,25 +22,21 @@ type FilterOnIndex[Tup <: Tuple, P[_ <: Tuple.Union[Tup], _ <: Int] <: Boolean, 
     case true => h *: FilterOnIndex[t, P, S[Pos]]
     case false => FilterOnIndex[t, P, S[Pos]]
 type Dedup[Tup <: Tuple] = FilterOnIndex[Tup, [X, I <: Int] =>> I == IndexWhere[Tup, [Y] =>> TagOf[X] == TagOf[Y], 0], 0]
-// TODO Tuple.Map with identity is a hack to force evaluation
 type MergeTuple[x <: Tuple, y <: Tuple] = Dedup[Tuple.Concat[x, y]]
 
 // TODO the following three functions could be merge, no need for the intermediate key lists
 inline def tags[Tup <: Tuple]: List[String] = inline erasedValue[Tup] match
   case _: EmptyTuple => Nil
-  case _: *:[v, EmptyTuple] => constValue[TagOf[v]] :: Nil
-  case _: *:[v1, *:[v2, EmptyTuple]] => constValue[TagOf[v1]]::constValue[TagOf[v2]] :: Nil
-  case _: *:[v1, *:[v2, *:[v3, EmptyTuple]]] => constValue[TagOf[v1]]::constValue[TagOf[v2]]::constValue[TagOf[v3]] :: Nil
+  case _: (v *: EmptyTuple) => constValue[TagOf[v]]::Nil
+  case _: (v1 *: v2 *: EmptyTuple) => constValue[TagOf[v1]]::constValue[TagOf[v2]]::Nil
+  case _: (v1 *: v2 *: v3 *: EmptyTuple) => constValue[TagOf[v1]]::constValue[TagOf[v2]]::constValue[TagOf[v3]]::Nil
 
 // TODO this could be done at compiletime for 90%
 def distribute(c: Tuple, combined: List[String], left: List[String], right: List[String],
                l: Tuple = EmptyTuple, r: Tuple = EmptyTuple): (Tuple, Tuple) = combined match
-  case Nil =>
-    assert(c.size == 0)
-    assert(left.isEmpty && right.isEmpty)
-    (l, r)
-  case h :: t =>
-    // TODO simplify
+  case Nil => (l, r)
+  case h::t =>
+    // TODO simplify + explot c and combined are of equal length by construction
     distribute(c.drop(1), t,
       if left.headOption.contains(h) then left.tail else left,
       if right.headOption.contains(h) then right.tail else right,
@@ -101,6 +96,7 @@ class Node[R, A, E] extends Descend[R, A, E]:
     self.mergeWith[S, B, (A, B), (R, S)](Tuple2.apply, identity)(other)
 
 extension [R <: Tuple, A, E](n: Node[R, A, E])
+  // TODO AssumeTuple is valid here because we know the actual R and S going in, which are bound the be Tuples
   inline infix def smartMergeWith[S <: Tuple, B, C](op: (A, B) => C)(other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], C, E] =
     n.parallel[S, B, [_, _] =>> C, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](op, splitTuple(_))(other)
 

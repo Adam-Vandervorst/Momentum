@@ -5,6 +5,9 @@ package be.adamv.momentum
 import collection.mutable.ListBuffer
 
 
+type AssumeTuple[X] = X & Tuple
+
+
 package util:
   def deplete[T](xs: Seq[T]): Descend[Unit, T, Unit] = (sset: Sink[T, Unit]) => _ =>
     xs.foreach(sset.apply)
