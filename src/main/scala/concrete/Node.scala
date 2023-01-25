@@ -111,5 +111,5 @@ object Node extends DescendFactory[Node]:
   override def start[A, E]: Node[A, A, E] = new Node:
     override def adapt(s: Sink[A, E]): Sink[A, E] = s
 
-  override def continuing[R, A, E](descend: Descend[R, A, E]): Node[R, A, E] = new Node:
+  override def succeeding[R, A, E](descend: Descend[R, A, E]): Node[R, A, E] = new Node:
     override def adapt(s: Sink[A, E]): Sink[R, E] = descend.adapt(s)

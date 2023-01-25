@@ -65,7 +65,7 @@ class NodeTest extends FunSuite:
 
   test("continuing") {
     val s = Seq(1, 2, 3)
-    val depl = Node.continuing(deplete(s))
+    val depl = Node.succeeding(deplete(s))
     val r = depl.map(_*3)
 
     val (trace, res) = newTrace[Any]()

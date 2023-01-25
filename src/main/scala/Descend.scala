@@ -11,11 +11,11 @@ trait Descend[-R, +A, E]:
 
 trait DescendFactory[D[r, a, e] <: Descend[r, a, e]]:
   def start[A, E]: D[A, A, E]
-  def continuing[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E]
+  def succeeding[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E]
 
 object Descend extends DescendFactory[Descend]:
-  def start[A, E]: Descend[A, A, E] = identity
-  def continuing[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E] = descend
+  inline def start[A, E]: Descend[A, A, E] = identity
+  inline def succeeding[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E] = descend
 
 
 /*
