@@ -5,11 +5,8 @@ package concrete
 class Var[A](initial: A) extends Place[A]:
   protected var value: A = initial
 
-  def set(a: A): Unit =
-    value = a
-
-  def get(u: Unit): A =
-    value
+  def set(a: A): Unit = value = a
+  def get(u: Unit): A = value
 
 object Var:
   def entangled[A, B](a_b: Either[A, B], l: A => B, r: B => A): (Var[A], Var[B]) =
