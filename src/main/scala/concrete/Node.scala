@@ -71,8 +71,8 @@ class Node[R, A, E] extends Descend[R, A, E]:
   def parallel[S, B, F[_, _], CF[_, _]](
     op: (A, B) => F[A, B],
     coop: CF[R, S] => (R, S))(
-    other: Node[S, B, E])(using 
-    d: Default[E], 
+    other: Node[S, B, E])(using
+    d: Default[E],
     m: Merge[E]): Node[CF[R, S], F[A, B], E] = new:
     override val index: Int = (self.index max other.index) + 1
 
@@ -101,8 +101,11 @@ class Node[R, A, E] extends Descend[R, A, E]:
     self.mergeWith[S, B, (A, B), (R, S)](Tuple2.apply, identity)(other)
 
 extension [R <: Tuple, A, E](n: Node[R, A, E])
+  inline infix def smartMergeWith[S <: Tuple, B, C](op: (A, B) => C)(other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], C, E] =
+    n.parallel[S, B, [_, _] =>> C, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](op, splitTuple(_))(other)
+
   inline infix def smartMerge[S <: Tuple, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], (A, B), E] =
-    n.parallel[S, B, Tuple2, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](Tuple2(_, _), splitTuple(_))(other)
+    n.smartMergeWith[S, B, Tuple2[A, B]](Tuple2.apply)(other)
 
 
 object Node extends DescendFactory[Node]:
