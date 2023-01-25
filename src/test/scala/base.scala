@@ -1,13 +1,27 @@
-//package be.adamv.momentum
-//
-//import be.adamv.momentum.util.*
+package be.adamv.momentum
+
+import be.adamv.momentum.util.*
 //import be.adamv.momentum.concrete.*
-//import munit.FunSuite
+import munit.FunSuite
 //
 //import scala.collection.mutable.ListBuffer
-//
-//
-//class BaseTest extends FunSuite:
+
+
+class BaseTest extends FunSuite:
+  test("map contramap") {
+    val a = 0 to 4
+    val b = 5 to 9
+    val src_a = deplete(a)
+    val src_b = deplete(b)
+    val (doubles, v) = newTrace[Int]()
+    val (halves, w) = newTrace[Double]()
+    src_a.map(_ * 2).adapt(doubles).tick()
+    src_b.adapt(halves.contramap(_.toDouble / 2)).tick()
+    assert(v() == a.map(_ * 2))
+    assert(w() == b.map(_.toDouble / 2))
+  }
+
+
 //  test("source sink") {
 //    val xs = 1 to 9
 //    val (buffer, res) = newTrace[Int]()

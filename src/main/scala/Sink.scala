@@ -24,7 +24,7 @@ trait Sink[-A, E]:
       set(state)
 
 extension [T, S <: String & Singleton, A <: Tags.Value[T, S], E](s: Sink[Tags.Value[T, S] *: EmptyTuple, E])
-  def applySingle(t: T): E = s.apply(Tags.name[S](t) *: EmptyTuple)
+  def asSingle: Sink[T, E] = t => s.apply(Tags.name[S](t) *: EmptyTuple)
 
 extension [A, E] (sset: Sink[A, E])(using inline d: Default[E])
   inline def contrafilter[AA <: A](f: AA => Boolean): Sink[AA, E] =
