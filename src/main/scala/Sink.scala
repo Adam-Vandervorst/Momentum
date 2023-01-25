@@ -1,6 +1,7 @@
 package be.adamv.momentum
 
 
+@FunctionalInterface
 trait Sink[-A, E]:
   set =>
   def apply(a: A): E
@@ -26,12 +27,12 @@ trait Sink[-A, E]:
 extension [T, S <: String & Singleton, A <: Tags.Value[T, S], E](s: Sink[Tags.Value[T, S] *: EmptyTuple, E])
   inline def asSingle: Sink[T, E] = t => s.apply(Tags.name[S](t) *: EmptyTuple)
 
-extension [A, E] (sset: Sink[A, E])(using d: Default[E])
+extension [A, E] (snk: Sink[A, E])(using d: Spawn[E])
   def contrafilter[AA <: A](f: AA => Boolean): Sink[AA, E] =
-    (a: AA) => if f(a) then sset(a) else d.value
+    (a: AA) => if f(a) then snk(a) else d.spawn()
 
   def contracollect[B](pf: PartialFunction[B, A]): Sink[B, E] =
-    { case pf(a) => sset(a); case _ => d.value }
+    { case pf(a) => snk(a); case _ => d.spawn() }
 
 
 /*

@@ -67,40 +67,40 @@ class Node[R, A, E] extends Descend[R, A, E]:
     op: (A, B) => F[A, B],
     coop: CF[R, S] => (R, S))(
     other: Node[S, B, E])(using
-    d: Default[E],
-    m: Merge[E]): Node[CF[R, S], F[A, B], E] = new:
+                          se: Spawn[E],
+                          me: Merge[E]): Node[CF[R, S], F[A, B], E] = new:
     override val index: Int = (self.index max other.index) + 1
 
     override def adapt(s: Sink[F[A, B], E]): Sink[CF[R, S], E] =
       if self.index > other.index then
 //        println(s"here ${self.index} ${other.index}")
         var vb: Option[B] = None
-        val others = other.adapt(b => {vb = Some(b); d.value})
+        val others = other.adapt(b => {vb = Some(b); se.spawn()})
         val selfs = self.adapt(a => s(op(a, vb.get)))
         t =>
           val (r, s) = coop(t)
-          {val o = others(s); m.merge(selfs(r), o)}
+          {val o = others(s); me.merge(selfs(r), o)}
       else
 //        println(s"there ${self.index} ${other.index}")
         var va: Option[A] = None
-        val selfs = self.adapt(a => {va = Some(a); d.value})
+        val selfs = self.adapt(a => {va = Some(a); se.spawn()})
         val others = other.adapt(b => s(op(va.get, b)))
         t =>
           val (r, s) = coop(t)
-          m.merge(selfs(r), others(s))
+          me.merge(selfs(r), others(s))
 
-  inline def mergeWith[S, B, C, T](op: (A, B) => C, coop: T => (R, S))(other: Node[S, B, E])(using Default[E], Merge[E]): Node[T, C, E] =
+  inline def mergeWith[S, B, C, T](op: (A, B) => C, coop: T => (R, S))(other: Node[S, B, E])(using Spawn[E], Merge[E]): Node[T, C, E] =
     parallel[S, B, [_, _] =>> C, [_, _] =>> T](op, coop)(other)
 
-  inline infix def merge[S, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[(R, S), (A, B), E] =
+  inline infix def merge[S, B](other: Node[S, B, E])(using Spawn[E], Merge[E]): Node[(R, S), (A, B), E] =
     self.mergeWith[S, B, (A, B), (R, S)](Tuple2.apply, identity)(other)
 
 extension [R <: Tuple, A, E](n: Node[R, A, E])
   // TODO AssumeTuple is valid here because we know the actual R and S going in, which are bound the be Tuples
-  inline def smartMergeWith[S <: Tuple, B, C](op: (A, B) => C)(other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], C, E] =
+  inline def smartMergeWith[S <: Tuple, B, C](op: (A, B) => C)(other: Node[S, B, E])(using Spawn[E], Merge[E]): Node[MergeTuple[R, S], C, E] =
     n.parallel[S, B, [_, _] =>> C, [r, s] =>> MergeTuple[AssumeTuple[r], AssumeTuple[s]]](op, splitTuple(_))(other)
 
-  inline infix def smartMerge[S <: Tuple, B](other: Node[S, B, E])(using Default[E], Merge[E]): Node[MergeTuple[R, S], (A, B), E] =
+  inline infix def smartMerge[S <: Tuple, B](other: Node[S, B, E])(using Spawn[E], Merge[E]): Node[MergeTuple[R, S], (A, B), E] =
     n.smartMergeWith[S, B, Tuple2[A, B]](Tuple2.apply)(other)
 
 
