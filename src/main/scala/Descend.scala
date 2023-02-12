@@ -9,11 +9,11 @@ trait Descend[-R, +A, E]:
     (snk: Sink[B, E]) => adapt(a => snk.set(f(a)))
 
 
-trait DescendFactory[D[r, a, e] <: Descend[r, a, e]]:
-  def start[A, E]: D[A, A, E]
+trait DescendFactory:
+  def start[A, E]: Descend[A, A, E]
   def succeeding[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E]
 
-object Descend extends DescendFactory[Descend]:
+object Descend extends DescendFactory:
   inline def start[A, E]: Descend[A, A, E] = identity
   inline def succeeding[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E] = descend
 

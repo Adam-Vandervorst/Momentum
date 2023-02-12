@@ -1,35 +1,40 @@
 package be.adamv.momentum
 package concrete
 
-//
-//// In-order buffered
-//class Relay[A] extends ConcreteBuffered[A]:
-//  self =>
-//  private val subs = collection.mutable.Stack.empty[Sink[A, _]]
-//
-//  val adaptor: Producer[A, Unit] & RBuffered[A] = new Producer[A, Unit] with RBuffered[A]:
-//    override def apply(s: Sink[A, Unit]): Unit =
-//      subs.addOne(s)
-//
-//    override def last: Option[A] = self.last
-//
-//  val setter: Sink[A, Unit] = (a: A) =>
-//    subs.foreach(_(a))
-//    _last = Some(a)
+
+// In-order buffered
+class Relay[A] extends Sink[A, Unit], Descend[Unit, A, Unit], Source[Option[A], Unit]:
+  self =>
+  private var last = Option.empty[A]
+  private val subs = collection.mutable.Stack.empty[Sink[A, Unit]]
+
+  override def adapt(s: Sink[A, Unit]): Sink[Unit, Unit] =
+    u => subs.push(s)
+
+  override def set(a: A): Unit =
+    last = Some(a)
+    subs.foreach(_.set(a))
+
+  override def get(e: Unit): Option[A] =
+    last
 
 
-/*
 object Relay:
-  def inOrderDrop[V](srcs: List[Source[V]]): RBuffered[V] & Source[V] =
-    new Relay[V]:
-      private val l = srcs.length
-      private var k = 0
-      for (src, i) <- srcs.zipWithIndex do
-        src.register(v => {
-          if i == k then
-            set(v)
-            k = (k + 1) % l
-        })
+  inline def start[A]: Relay[A] = new Relay[A] {}
+
+  inline def succeeding[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E] = descend
+
+
+  //  def inOrderDrop[V](srcs: List[Source[V]]): RBuffered[V] & Source[V] =
+//    new Relay[V]:
+//      private val l = srcs.length
+//      private var k = 0
+//      for (src, i) <- srcs.zipWithIndex do
+//        src.register(v => {
+//          if i == k then
+//            set(v)
+//            k = (k + 1) % l
+//        })
 
   //    def joinLeft[K, V](srcs: List[Source[(K, V)]]): Source[V] =
   //      new Relay[V]:
@@ -39,18 +44,18 @@ object Relay:
   //            lastK(i) = Some(k)
   //          })
 
-  def inOrderGen[V](srcs: Source[(Int, V)]*): RBuffered[V] & Source[V] =
-    new Relay[V] :
-      private var k = 0
-      private var wave = -1
-      for (src, i) <- srcs.zipWithIndex do
-        src.register((nwave, v) => {
-          if nwave > wave then
-            set(v)
-            k = 0
-            wave = nwave
-          else if nwave == wave && i <= k then
-            set(v)
-            k = i
-        })
-*/
+//  def inOrderGen[V](srcs: Source[(Int, V)]*): RBuffered[V] & Source[V] =
+//    new Relay[V] :
+//      private var k = 0
+//      private var wave = -1
+//      for (src, i) <- srcs.zipWithIndex do
+//        src.register((nwave, v) => {
+//          if nwave > wave then
+//            set(v)
+//            k = 0
+//            wave = nwave
+//          else if nwave == wave && i <= k then
+//            set(v)
+//            k = i
+//        })
+

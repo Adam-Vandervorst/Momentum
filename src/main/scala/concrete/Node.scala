@@ -104,7 +104,7 @@ extension [R <: Tuple, A, E](n: Node[R, A, E])
     n.smartMergeWith[S, B, Tuple2[A, B]](Tuple2.apply)(other)
 
 
-object Node extends DescendFactory[Node]:
+object Node extends DescendFactory:
   inline def named[A, E](n: String): Node[Value[A, n.type] *: EmptyTuple, A, E] = new Node:
     override def adapt(s: Sink[A, E]): Sink[Value[A, n.type] *: EmptyTuple, E] = s.contramap(_.head)
 
