@@ -18,10 +18,10 @@ class NodeTest extends FunSuite:
     val combined = double smartMerge isPositive
 
     val (trace, res) = newTrace[Any]()
-    val feed = combined.adapt(trace).asSingle
+    val feed: Sink[Int, Unit] = combined.adapt(trace).asSingle
 
-    feed(-1)
-    feed(1)
+    feed.set(-1)
+    feed.set(1)
     assert(res() == List((-2, false), (2, true)))
   }
 
@@ -59,7 +59,7 @@ class NodeTest extends FunSuite:
     val (trace, res) = newTrace[Any]()
     val ls = la.adapt(trace)
 
-    ls("a" -> 1, "b" -> 2, "c" -> 3)
+    ls.set("a" -> 1, "b" -> 2, "c" -> 3)
     assert(res() == List("a: 11  b: 2  c: 3"))
   }
 
@@ -82,7 +82,7 @@ class NodeTest extends FunSuite:
     val doubledNumbers = numbers.map(_ * 2)
     val combinedStream = doubledNumbers smartMerge isPositive
     val feed = combinedStream.adapt(pairs).asSingle
-    feed(-1)
-    feed(1)
+    feed.set(-1)
+    feed.set(1)
     assert(res() == List((-2, false), (2, true)))
   }
