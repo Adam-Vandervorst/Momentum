@@ -24,15 +24,16 @@ trait Sink[-A, E]:
       state = op(state, b)
       set(state)
 
-extension [T, S <: String & Singleton, A <: Tags.Value[T, S], E](snk: Sink[Tags.Value[T, S] *: EmptyTuple, E])
-  inline def asSingle: Sink[T, E] = t => snk.set(Tags.name[S](t) *: EmptyTuple)
+object Sink:
+  extension [T, S <: String & Singleton, A <: Tags.Value[T, S], E](snk: Sink[Tags.Value[T, S] *: EmptyTuple, E])
+    inline def asSingle: Sink[T, E] = t => snk.set(Tags.name[S](t) *: EmptyTuple)
 
-extension [A, E] (snk: Sink[A, E])(using d: Spawn[E])
-  def contrafilter[AA <: A](f: AA => Boolean): Sink[AA, E] =
-    (a: AA) => if f(a) then snk.set(a) else d.spawn()
+  extension [A, E] (snk: Sink[A, E])(using d: Spawn[E])
+    inline def contrafilter[AA <: A](f: AA => Boolean): Sink[AA, E] =
+      (a: AA) => if f(a) then snk.set(a) else d.spawn()
 
-  def contracollect[B](pf: PartialFunction[B, A]): Sink[B, E] =
-    { case pf(a) => snk.set(a); case _ => d.spawn() }
+    inline def contracollect[B](pf: PartialFunction[B, A]): Sink[B, E] =
+      { case pf(a) => snk.set(a); case _ => d.spawn() }
 
 
 /*

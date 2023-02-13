@@ -15,32 +15,33 @@ trait Source[+A, E]:
   def map[B](f: A => B): Source[B, E] =
     e => f(self.get(e))
 
-extension [A, E](src: Source[A, E])(using c: Cease[E])
-  def mapTo[B](v: => B): Source[B, E] =
-    e =>
-      c.cease(e)
-      v
+object Source:
+  extension[A, E](src: Source[A, E])(using c: Cease[E])
+    def mapTo[B](v: => B): Source[B, E] =
+      e =>
+        c.cease(e)
+        v
 
-extension [A, E](src: Source[A, E])(using d: Duplicate[E])
-  def filter(p: A => Boolean): Source[A, E] =
-    initial =>
-      val (ine, ie) = d.duplicate(initial)
-      var a = src.get(ie)
-      var re = ine
-      while !p(a) do
-        val (ne, e) = d.duplicate(re)
-        re = ne
-        a = src.get(e)
-      a
+  extension[A, E](src: Source[A, E])(using d: Duplicate[E])
+    inline def filter(p: A => Boolean): Source[A, E] =
+      initial =>
+        val (ine, ie) = d.duplicate(initial)
+        var a = src.get(ie)
+        var re = ine
+        while !p(a) do
+          val (ne, e) = d.duplicate(re)
+          re = ne
+          a = src.get(e)
+        a
 
-  def collect[B](pf: PartialFunction[A, B]): Source[B, E] =
-    @annotation.tailrec
-    def rec(ie: E): B =
-      val (ne, e) = d.duplicate(ie)
-      src.get(e) match
-        case pf(b) => b
-        case _ => rec(ne)
-    rec
+    inline def collect[B](pf: PartialFunction[A, B]): Source[B, E] =
+      @annotation.tailrec
+      def rec(ie: E): B =
+        val (ne, e) = d.duplicate(ie)
+        src.get(e) match
+          case pf(b) => b
+          case _ => rec(ne)
+      rec
 
 //  def scan[B](z: B)(op: (B, A) => B): Source[B, E] =
 //    var state: B = z
