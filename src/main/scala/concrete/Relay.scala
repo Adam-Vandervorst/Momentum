@@ -18,6 +18,10 @@ class Relay[A] extends Sink[A, Unit], Descend[Unit, A, Unit], Source[Option[A], 
   override def get(e: Unit): Option[A] =
     last
 
+  override def map[B](f: A => B): Descend[Unit, B, Unit] & Source[Option[B], Unit] = new Descend[Unit, B, Unit] with Source[Option[B], Unit]:
+    def adapt(sink: Sink[B, Unit]): Sink[Unit, Unit] = self.adapt((a: A) => sink.set(f(a)))
+    override def get(e: Unit): Option[B] = self.last.map(f)
+
 
 object Relay:
   inline def start[A]: Relay[A] = new Relay[A] {}

@@ -21,11 +21,11 @@ extension [A, E](self: Sink[A, E])
       other.set(p._2)
 
 
-//extension [A, E] (self: Producer[A, E])(using d: Default[E])
-//  infix def zipLeft[B](other: Producer[B, E] & RBuffered[B]): Producer[(A, B), E] =
-//    (sset: Sink[(A, B), E]) =>
-//      other(b => d.value)
-//      self(a => { if other.last.nonEmpty then sset(a, other.last.get) else d.value })
+extension [A] (self: Descend[Unit, A, Unit])
+  infix def zipLeft[B](other: Descend[Unit, B, Unit] & Source[Option[B], Unit]): Descend[Unit, (A, B), Unit] =
+    (s: Sink[(A, B), Unit]) =>
+      other.adapt(b => ())
+      self.adapt(a => { val mb = other.get(()); if mb.nonEmpty then s.set(a, mb.get) else () })
 //
 //extension [A, E] (self: Producer[A, E] & RBuffered[A])(using d: Default[E])
 //  inline infix def zipRight[B](other: Producer[B, E]): Producer[(A, B), E] =

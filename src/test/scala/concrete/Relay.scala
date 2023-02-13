@@ -1,59 +1,54 @@
-//package be.adamv.momentum
-//package concrete
-//
-//import be.adamv.momentum.util.*
-//import be.adamv.momentum.concrete.*
-//import munit.FunSuite
-//
-//import scala.collection.mutable.ListBuffer
-//
-//
-//class RelayTest extends FunSuite:
-//  test("source sink relay") {
-//    val a = 0 to 4
-//    val b = 5 to 9
-//    val src_a = deplete(a)
-//    val src_b = deplete(b)
-//    val relay_ab = Relay[Int]
-//    val log = ListBuffer[Int]()
-//    val sink = trace(log)
-//    relay_ab.adaptor(sink)
-//    src_a(relay_ab.setter)
-//    src_b(relay_ab.setter)
-//    assert(log.toSet == (a ++ b).toSet)
-//  }
-//
-//  test("source sink relay map contramap") {
-//    val a = 0 to 4
-//    val b = 5 to 9
-//    val src_a = deplete(a)
-//    val src_b = deplete(b)
-//    val relay_ab = Relay[Int]
-//    val v = ListBuffer[Int]()
-//    val w = ListBuffer[Double]()
-//    val doubles = trace(v)
-//    val halves = trace(w)
-//    relay_ab.adaptor.mapS[Int](_.contramap(_ * 2))(doubles)
-//    relay_ab.adaptor(halves.contramap(_ / 2))
-//    src_a(relay_ab.setter)
-//    src_b(relay_ab.setter)
-//    assert(v.toSet == (a ++ b).map(_ * 2).toSet)
-//    assert(w.toSet == (a ++ b).map(_ / 2).toSet)
-//  }
-//
-//  test("diamond") {
-//    val (numbers, feed) = callback[Int]
-//    val (pairs, res) = newTrace[(Int, Boolean)]()
-//    val isPositive: Producer[Boolean, Unit] & RBuffered[Boolean] = numbers.mapS[Boolean](_.contramap(_ > 0)).buffered
-//    val doubledNumbers: Producer[Int, Unit] & RBuffered[Int] = numbers.mapS[Int](_.contramap(_ * 2)).buffered
-//    val combinedStream: Producer[(Int, Boolean), Unit] = doubledNumbers.zipLeft(isPositive)
-//    combinedStream(pairs)
-//    feed(-1)
-//    feed(1)
-//    assert(res() == List((-2, false), (2, true)))
-//  }
-//
-//class LazyRelay extends FunSuite:
-//  test("diamond") {
-//
-//  }
+package be.adamv.momentum.test
+package concrete
+
+import be.adamv.momentum.{*, given}
+import be.adamv.momentum.Tags.*
+import be.adamv.momentum.util.*
+import be.adamv.momentum.concrete.*
+import munit.FunSuite
+
+
+import scala.collection.mutable.ListBuffer
+
+
+class RelayTest extends FunSuite:
+  test("source sink relay") {
+    val a = 0 to 4
+    val b = 5 to 9
+    val src_a = deplete(a)
+    val src_b = deplete(b)
+    val relay_ab = Relay[Int]
+    val (sink, log) = newTrace[Int]()
+    relay_ab.adapt(sink).tick()
+    src_a.adapt(relay_ab).tick()
+    src_b.adapt(relay_ab).tick()
+    assert(log() == (a ++ b))
+  }
+
+  test("source sink relay map contramap") {
+    val a = 0 to 4
+    val b = 5 to 9
+    val src_a = deplete(a)
+    val src_b = deplete(b)
+    val relay_ab = Relay[Int]
+    val (doubles, v) = newTrace[Int]()
+    val (halves, w) = newTrace[Double]()
+    relay_ab.map(_ * 2).adapt(doubles).tick()
+    relay_ab.adapt(halves.contramap(_ / 2)).tick()
+    src_a.adapt(relay_ab).tick()
+    src_b.adapt(relay_ab).tick()
+    assert(v().toSet == (a ++ b).map(_ * 2).toSet)
+    assert(w().toSet == (a ++ b).map(_ / 2).toSet)
+  }
+
+  test("diamond") {
+    val r = new Relay[Int]
+    val (pairs, res) = newTrace[(Int, Boolean)]()
+    val isPositive = r.map(_ > 0)
+    val doubledNumbers = r.map(_ * 2)
+    val combinedStream = doubledNumbers.zipLeft(isPositive)
+    combinedStream.adapt(pairs).tick()
+    r.set(-1)
+    r.set(1)
+    assert(res() == List((-2, false), (2, true)))
+  }

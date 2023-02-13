@@ -7,8 +7,6 @@ import be.adamv.momentum.util.*
 import be.adamv.momentum.concrete.*
 import munit.FunSuite
 
-import scala.collection.mutable.ListBuffer
-
 
 class NodeTest extends FunSuite:
   test("map smartMerge fork") {
