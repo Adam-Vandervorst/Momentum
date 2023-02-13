@@ -19,9 +19,9 @@ class RelayTest extends FunSuite:
     val src_b = deplete(b)
     val relay_ab = Relay[Int]
     val (sink, log) = newTrace[Int]()
-    relay_ab.adapt(sink).tick()
-    src_a.adapt(relay_ab).tick()
-    src_b.adapt(relay_ab).tick()
+    relay_ab.adaptNow(sink)
+    src_a.adaptNow(relay_ab)
+    src_b.adaptNow(relay_ab)
     assert(log() == (a ++ b))
   }
 
@@ -33,10 +33,10 @@ class RelayTest extends FunSuite:
     val relay_ab = Relay[Int]
     val (doubles, v) = newTrace[Int]()
     val (halves, w) = newTrace[Double]()
-    relay_ab.map(_ * 2).adapt(doubles).tick()
-    relay_ab.adapt(halves.contramap(_ / 2)).tick()
-    src_a.adapt(relay_ab).tick()
-    src_b.adapt(relay_ab).tick()
+    relay_ab.map(_ * 2).adaptNow(doubles)
+    relay_ab.adaptNow(halves.contramap(_ / 2))
+    src_a.adaptNow(relay_ab)
+    src_b.adaptNow(relay_ab)
     assert(v().toSet == (a ++ b).map(_ * 2).toSet)
     assert(w().toSet == (a ++ b).map(_ / 2).toSet)
   }
@@ -47,7 +47,7 @@ class RelayTest extends FunSuite:
     val isPositive = r.map(_ > 0)
     val doubledNumbers = r.map(_ * 2)
     val combinedStream = doubledNumbers.zipLeft(isPositive)
-    combinedStream.adapt(pairs).tick()
+    combinedStream.adaptNow(pairs)
     r.set(-1)
     r.set(1)
     assert(res() == List((-2, false), (2, true)))

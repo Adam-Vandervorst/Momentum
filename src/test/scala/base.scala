@@ -15,8 +15,8 @@ class BaseTest extends FunSuite:
     val src_b = deplete(b)
     val (doubles, v) = newTrace[Int]()
     val (halves, w) = newTrace[Double]()
-    src_a.map(_ * 2).adapt(doubles).tick()
-    src_b.adapt(halves.contramap(_.toDouble / 2)).tick()
+    src_a.map(_ * 2).adaptNow(doubles)
+    src_b.adaptNow(halves.contramap(_.toDouble / 2))
     assert(v() == a.map(_ * 2))
     assert(w() == b.map(_.toDouble / 2))
   }

@@ -37,11 +37,11 @@ class NodeTest extends FunSuite:
 
     val (trace, res) = newTrace[Any]()
 
-    deplete(1 to 10).adapt(combined0.adapt(trace).asSingle).tick()
+    deplete(1 to 10).adaptNow(combined0.adapt(trace).asSingle)
     assert(res() == List((30,30), (60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300)))
-    deplete(1 to 10).adapt(combined1.adapt(trace).asSingle).tick()
+    deplete(1 to 10).adaptNow(combined1.adapt(trace).asSingle)
     assert(res() == List((60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300), (330,330)))
-    deplete(1 to 10).adapt(combined2.adapt(trace).asSingle).tick()
+    deplete(1 to 10).adaptNow(combined2.adapt(trace).asSingle)
     assert(res() == List((1,1), (10,10), (2,2), (11,11), (3,3), (12,12), (4,4), (13,13), (5,5), (14,14)))
   }
 
