@@ -4,6 +4,55 @@ import be.adamv.momentum.util.*
 import be.adamv.momentum.concrete.*
 import munit.FunSuite
 
+type Token = String
+type Temp = Int
+type Cloudiness = Double
+case class WeatherReport(temperature: Temp, cloudiness: Cloudiness)
+
+class WeatherAPI extends Source[WeatherReport, Token]:
+  private val valid_tokens: Set[Token] = Set("djweo", "j23oa")
+
+  var temp = 20
+  def genWeatherReport(): WeatherReport =
+    temp += 1
+    WeatherReport(temp, Math.random())
+
+  override def get(token: Token): WeatherReport =
+    if valid_tokens.contains(token) then genWeatherReport()
+    else throw RuntimeException(f"Unauthorized $token")
+
+
+class EmailReader[A](name: String) extends Sink[A, Unit]:
+  override def set(a: A): Unit =
+    println(f"$name reads email $a")
+
+
+class WeatherEmail extends FunSuite:
+  test("API company customer") {
+    val api: Source[WeatherReport, Token] = WeatherAPI()
+
+    val (hand, clock) = callback[Unit]()
+    val api_call_server: Relay[WeatherReport] = Relay()
+    clock.adaptNow(api_call_server.contramap(_ => api.get("j23oa")))
+    val email_server: Descend[Unit, Temp, Unit] = api_call_server.map(_.temperature)
+
+    val alice: Sink[Temp, Unit] = EmailReader[Temp]("Alice")
+    val bob: Sink[Temp, Unit] = EmailReader[Temp]("Bob")
+
+    val alice_subscribe = email_server.adapt(alice)
+    val bob_subscribe = email_server.adapt(bob)
+
+    alice_subscribe.tick()
+
+    hand.tick()
+
+    hand.tick()
+
+    bob_subscribe.tick()
+
+    hand.tick()
+
+  }
 
 class FibVariants extends FunSuite:
   ()

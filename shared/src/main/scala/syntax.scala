@@ -6,6 +6,7 @@ extension [E](inline ticker: Sink[Unit, E])
 
 extension [A](inline getter: Source[A, Unit])
   inline def value: A = getter.get(())
+  inline def nvalues(n: Int): List[A] = List.fill(n)(getter.value)
 
 extension [A, E](inline simple: Descend[Unit, A, E])
   inline def adaptNow(snk: Sink[A, E]): E = simple.adapt(snk).tick()

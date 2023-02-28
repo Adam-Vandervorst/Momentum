@@ -1,11 +1,18 @@
 package be.adamv.momentum
 
 import be.adamv.momentum.util.*
+import be.adamv.momentum.{*, given}
 //import be.adamv.momentum.concrete.*
 import munit.FunSuite
-//
-//import scala.collection.mutable.ListBuffer
 
+
+
+class Nats extends Source[Int, Unit]:
+  var current: Int = 0
+  override def get(e: Unit): Int =
+    val ret = current
+    current += 1
+    ret
 
 class BaseTest extends FunSuite:
   test("map contramap") {
@@ -19,6 +26,14 @@ class BaseTest extends FunSuite:
     src_b.adaptNow(halves.contramap(_.toDouble / 2))
     assert(v() == a.map(_ * 2))
     assert(w() == b.map(_.toDouble / 2))
+  }
+
+  test("squares above 100") {
+    val numbers: Source[Int, Unit] = Nats()
+    val squares: Source[Int, Unit] = numbers.map(x => x*x)
+    val above100: Source[Int, Unit] = squares.filter(x => x > 100)
+
+    assert(above100.nvalues(10) == List(121, 144, 169, 196, 225, 256, 289, 324, 361, 400))
   }
 
 

@@ -18,6 +18,10 @@ package util:
       val res = xs.result(); xs.clear(); res
     })
 
+  def callback[X](): (Sink[X, Unit], Descend[Unit, X, Unit]) =
+    val r = new Relay[X]
+    (r, r)
+
 //  def newTicker(): (Producer[Unit, Unit], Int => Unit) =
 //    val (src, tick) = callback[Unit]
 //    (src, i => (1 to i).foreach(_ => tick(())))
