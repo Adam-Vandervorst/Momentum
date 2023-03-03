@@ -8,6 +8,9 @@ trait Descend[-R, +A, E]:
   def map[B](f: A => B): Descend[R, B, E] =
     (snk: Sink[B, E]) => adapt(a => snk.set(f(a)))
 
+  def tapEach(f: A => Unit): Descend[R, A, E] =
+    (snk: Sink[A, E]) => adapt(a => { f(a); snk.set(a) })
+
 
 trait DescendFactory:
   def start[A, E]: Descend[A, A, E]

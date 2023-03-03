@@ -7,6 +7,8 @@ trait Ascend[+R, -A, E]:
   def contramap[B](f: B => A): Ascend[R, B, E] =
     (src: Source[B, E]) => adapt(e => f(src.get(e)))
 
+  def eachTapped[AA <: A](f: AA => Unit): Ascend[R, AA, E] =
+    (src: Source[AA, E]) => adapt(e => { val a = src.get(e); f(a); a })
 
 trait AscendFactory[D[r, a, e] <: Ascend[r, a, e]]:
   def end[A, E]: D[A, A, E]
