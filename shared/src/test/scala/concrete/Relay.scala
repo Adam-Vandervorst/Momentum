@@ -18,11 +18,11 @@ class RelayTest extends FunSuite:
     val src_a = deplete(a)
     val src_b = deplete(b)
     val relay_ab = Relay[Int]
-    val (sink, log) = newTrace[Int]()
-    relay_ab.adaptNow(sink)
+    val log = Trace[Int]()
+    relay_ab.adaptNow(log)
     src_a.adaptNow(relay_ab)
     src_b.adaptNow(relay_ab)
-    assert(log() == (a ++ b))
+    assert(log.value == (a ++ b))
   }
 
   test("source sink relay map contramap") {
@@ -31,24 +31,24 @@ class RelayTest extends FunSuite:
     val src_a = deplete(a)
     val src_b = deplete(b)
     val relay_ab = Relay[Int]
-    val (doubles, v) = newTrace[Int]()
-    val (halves, w) = newTrace[Double]()
+    val doubles = Trace[Int]()
+    val halves = Trace[Double]()
     relay_ab.map(_ * 2).adaptNow(doubles)
     relay_ab.adaptNow(halves.contramap(_ / 2))
     src_a.adaptNow(relay_ab)
     src_b.adaptNow(relay_ab)
-    assert(v().toSet == (a ++ b).map(_ * 2).toSet)
-    assert(w().toSet == (a ++ b).map(_ / 2).toSet)
+    assert(doubles.value.toSet == (a ++ b).map(_ * 2).toSet)
+    assert(halves.value.toSet == (a ++ b).map(_ / 2).toSet)
   }
 
   test("diamond") {
     val r = new Relay[Int]
-    val (pairs, res) = newTrace[(Int, Boolean)]()
+    val pairs = Trace[(Int, Boolean)]()
     val isPositive = r.map(_ > 0)
     val doubledNumbers = r.map(_ * 2)
     val combinedStream = doubledNumbers.zipLeft(isPositive)
     combinedStream.adaptNow(pairs)
     r.set(-1)
     r.set(1)
-    assert(res() == List((-2, false), (2, true)))
+    assert(pairs.value == List((-2, false), (2, true)))
   }

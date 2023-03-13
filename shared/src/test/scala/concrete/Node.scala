@@ -15,12 +15,12 @@ class NodeTest extends FunSuite:
     val isPositive = numbers.map(_ > 0)
     val combined = double smartMerge isPositive
 
-    val (trace, res) = newTrace[Any]()
+    val trace = Trace[Any]()
     val feed: Sink[Int, Unit] = combined.adapt(trace).asSingle
 
     feed.set(-1)
     feed.set(1)
-    assert(res() == List((-2, false), (2, true)))
+    assert(trace.value == List((-2, false), (2, true)))
   }
 
   test("chain map smartMerge") {
@@ -35,14 +35,14 @@ class NodeTest extends FunSuite:
     val r2 = combined1.map{ case (a, b) => (a % 17, b % 17)}.map{ case (a, b) => (a + b) % 17 }
     val combined2 = l2 smartMerge r2
 
-    val (trace, res) = newTrace[Any]()
+    val trace = Trace[Any]()
 
     deplete(1 to 10).adaptNow(combined0.adapt(trace).asSingle)
-    assert(res() == List((30,30), (60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300)))
+    assert(trace.clear() == List((30,30), (60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300)))
     deplete(1 to 10).adaptNow(combined1.adapt(trace).asSingle)
-    assert(res() == List((60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300), (330,330)))
+    assert(trace.clear() == List((60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300), (330,330)))
     deplete(1 to 10).adaptNow(combined2.adapt(trace).asSingle)
-    assert(res() == List((1,1), (10,10), (2,2), (11,11), (3,3), (12,12), (4,4), (13,13), (5,5), (14,14)))
+    assert(trace.clear() == List((1,1), (10,10), (2,2), (11,11), (3,3), (12,12), (4,4), (13,13), (5,5), (14,14)))
   }
 
   test("map smartMerge assoc") {
@@ -54,11 +54,11 @@ class NodeTest extends FunSuite:
     val l = (numbersma smartMerge numbersb) smartMerge numbersc
     val la = l.map{ case ((a, b), c) => s"a: $a  b: $b  c: $c" }
 
-    val (trace, res) = newTrace[Any]()
+    val trace = Trace[Any]()
     val ls = la.adapt(trace)
 
     ls.set("a" -> 1, "b" -> 2, "c" -> 3)
-    assert(res() == List("a: 11  b: 2  c: 3"))
+    assert(trace.value == List("a: 11  b: 2  c: 3"))
   }
 
   test("continuing") {
@@ -66,21 +66,21 @@ class NodeTest extends FunSuite:
     val depl = Node.succeeding(deplete(s))
     val r = depl.map(_*3)
 
-    val (trace, res) = newTrace[Any]()
+    val trace = Trace[Any]()
     val t = r.adapt(trace)
 
     t.tick()
-    assert(res() == s.map(_*3))
+    assert(trace.value == s.map(_*3))
   }
 
   test("diamond") {
     val numbers = Node.named[Int, Unit]("x")
-    val (pairs, res) = newTrace[(Int, Boolean)]()
+    val pairs = Trace[(Int, Boolean)]()
     val isPositive = numbers.map(_ > 0)
     val doubledNumbers = numbers.map(_ * 2)
     val combinedStream = doubledNumbers smartMerge isPositive
     val feed = combinedStream.adapt(pairs).asSingle
     feed.set(-1)
     feed.set(1)
-    assert(res() == List((-2, false), (2, true)))
+    assert(pairs.value == List((-2, false), (2, true)))
   }

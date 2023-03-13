@@ -12,12 +12,6 @@ package util:
   def deplete[T](xs: Seq[T]): Descend[Unit, T, Unit] = (snk: Sink[T, Unit]) => _ =>
     xs.foreach(snk.set)
 
-  def newTrace[X](): (Sink[X, Unit], () => List[X]) =
-    val xs = ListBuffer.empty[X]
-    ((x: X) => xs.addOne(x), () => {
-      val res = xs.result(); xs.clear(); res
-    })
-
   def callback[X](): (Sink[X, Unit], Descend[Unit, X, Unit]) =
     val r = new Relay[X]
     (r, r)

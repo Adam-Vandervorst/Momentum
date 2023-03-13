@@ -1,6 +1,6 @@
 package be.adamv.momentum.test
 
-import be.adamv.momentum.tick
+import be.adamv.momentum.*
 import be.adamv.momentum.util.*
 import munit.FunSuite
 
@@ -13,10 +13,10 @@ class UtilTest extends FunSuite:
     val b = 5 to 9
     val src_a = deplete(a)
     val src_b = deplete(b)
-    val (log, res) = newTrace[Int]()
-    src_a.adapt(log).tick()
-    src_b.adapt(log).tick()
-    assert(res() == (a ++ b))
+    val log = Trace[Int]()
+    src_a.adaptNow(log)
+    src_b.adaptNow(log)
+    assert(log.value == (a ++ b))
   }
 //  test("source deplete") {
 //    val xs = 1 to 9
