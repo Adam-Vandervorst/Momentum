@@ -2,31 +2,19 @@ package be.adamv.momentum
 package concrete
 
 
-// In-order buffered
-class Relay[A] extends Sink[A, Unit], Descend[Unit, A, Unit], Source[Option[A], Unit]:
+class InstantRelay[A] extends Sink[A, Unit], Descend[Unit, A, Unit]:
   self =>
-  private var last = Option.empty[A]
   private val subs = collection.mutable.Stack.empty[Sink[A, Unit]]
 
   override def adapt(s: Sink[A, Unit]): Sink[Unit, Unit] =
     u => subs.push(s)
 
   override def set(a: A): Unit =
-    last = Some(a)
     subs.foreach(_.set(a))
 
-  override def get(e: Unit): Option[A] =
-    last
 
-  override def map[B](f: A => B): Descend[Unit, B, Unit] & Source[Option[B], Unit] = new Descend[Unit, B, Unit] with Source[Option[B], Unit]:
-    def adapt(sink: Sink[B, Unit]): Sink[Unit, Unit] = self.adapt((a: A) => sink.set(f(a)))
-    override def get(e: Unit): Option[B] = self.last.map(f)
-
-
-object Relay:
-  inline def start[A]: Relay[A] = new Relay[A] {}
-
-  inline def succeeding[R, A, E](descend: Descend[R, A, E]): Descend[R, A, E] = descend
+object InstantRelay:
+  inline def start[A]: InstantRelay[A] = new InstantRelay[A] {}
 
 
   //  def inOrderDrop[V](srcs: List[Source[V]]): RBuffered[V] & Source[V] =

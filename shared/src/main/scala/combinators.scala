@@ -10,8 +10,8 @@ object Tags:
   inline given [T, S <: String & Singleton]: Conversion[T, Value[T, S]] = identity
 
   extension (s: String)
-    inline def ->(inline t: Any): Value[t.type, s.type] = t
-  inline def name[S <: String & Singleton](inline t: Any): Value[t.type, S] = t
+    def ->(t: Any): Value[t.type, s.type] = t
+  def name[S <: String & Singleton](t: Any): Value[t.type, S] = t
 
 
 extension [A, E](self: Sink[A, E])
@@ -22,11 +22,14 @@ extension [A, E](self: Sink[A, E])
 
 
 extension [A] (self: Descend[Unit, A, Unit])
-  infix def zipLeft[B](other: Descend[Unit, B, Unit] & Source[Option[B], Unit]): Descend[Unit, (A, B), Unit] =
+  // should be called pairOnLeftWhenBufferedRight
+  infix def zipLeft[B](other: Descend[Unit, B, Unit]): Descend[Unit, (A, B), Unit] =
     (s: Sink[(A, B), Unit]) =>
-      other.adapt(b => ())
-      self.adapt(a => { val mb = other.get(()); if mb.nonEmpty then s.set(a, mb.get) else () })
-//
+      var mb = Option.empty[B]
+      val os = other.adapt(b => mb = Some(b))
+      val r = self.adapt(a => if mb.nonEmpty then s.set(a, mb.get) else ())
+      (r setBoth os).expanded
+
 //extension [A, E] (self: Producer[A, E] & RBuffered[A])(using d: Default[E])
 //  inline infix def zipRight[B](other: Producer[B, E]): Producer[(A, B), E] =
 //    (sset: Sink[(A, B), E]) =>

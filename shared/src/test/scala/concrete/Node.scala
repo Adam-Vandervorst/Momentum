@@ -20,7 +20,7 @@ class NodeTest extends FunSuite:
 
     feed.set(-1)
     feed.set(1)
-    assert(trace.value == List((-2, false), (2, true)))
+    assert(trace.value.reverse == List((-2, false), (2, true)))
   }
 
   test("chain map smartMerge") {
@@ -38,11 +38,11 @@ class NodeTest extends FunSuite:
     val trace = Trace[Any]()
 
     deplete(1 to 10).adaptNow(combined0.adapt(trace).asSingle)
-    assert(trace.clear() == List((30,30), (60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300)))
+    assert(trace.clear().reverse == List((30,30), (60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300)))
     deplete(1 to 10).adaptNow(combined1.adapt(trace).asSingle)
-    assert(trace.clear() == List((60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300), (330,330)))
+    assert(trace.clear().reverse == List((60,60), (90,90), (120,120), (150,150), (180,180), (210,210), (240,240), (270,270), (300,300), (330,330)))
     deplete(1 to 10).adaptNow(combined2.adapt(trace).asSingle)
-    assert(trace.clear() == List((1,1), (10,10), (2,2), (11,11), (3,3), (12,12), (4,4), (13,13), (5,5), (14,14)))
+    assert(trace.clear().reverse == List((1,1), (10,10), (2,2), (11,11), (3,3), (12,12), (4,4), (13,13), (5,5), (14,14)))
   }
 
   test("map smartMerge assoc") {
@@ -70,7 +70,7 @@ class NodeTest extends FunSuite:
     val t = r.adapt(trace)
 
     t.tick()
-    assert(trace.value == s.map(_*3))
+    assert(trace.value.reverse == s.map(_*3))
   }
 
   test("diamond") {
@@ -82,5 +82,5 @@ class NodeTest extends FunSuite:
     val feed = combinedStream.adapt(pairs).asSingle
     feed.set(-1)
     feed.set(1)
-    assert(pairs.value == List((-2, false), (2, true)))
+    assert(pairs.value.reverse == List((-2, false), (2, true)))
   }

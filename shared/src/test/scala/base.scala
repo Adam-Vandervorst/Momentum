@@ -1,6 +1,7 @@
 package be.adamv.momentum
 
 import be.adamv.momentum.concrete.Trace
+import be.adamv.momentum.util.deplete
 import be.adamv.momentum.{*, given}
 //import be.adamv.momentum.concrete.*
 import munit.FunSuite
@@ -24,8 +25,8 @@ class BaseTest extends FunSuite:
     val halves = Trace[Double]()
     src_a.map(_ * 2).adaptNow(doubles)
     src_b.adaptNow(halves.contramap(_.toDouble / 2))
-    assert(doubles.value == a.map(_ * 2))
-    assert(halves.value == b.map(_.toDouble / 2))
+    assert(doubles.value.reverse == a.map(_ * 2))
+    assert(halves.value.reverse == b.map(_.toDouble / 2))
   }
 
   test("squares above 100") {

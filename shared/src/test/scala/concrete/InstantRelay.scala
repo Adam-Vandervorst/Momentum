@@ -8,21 +8,18 @@ import be.adamv.momentum.concrete.*
 import munit.FunSuite
 
 
-import scala.collection.mutable.ListBuffer
-
-
-class RelayTest extends FunSuite:
+class InstantRelayTest extends FunSuite:
   test("source sink relay") {
     val a = 0 to 4
     val b = 5 to 9
     val src_a = deplete(a)
     val src_b = deplete(b)
-    val relay_ab = Relay[Int]
+    val relay_ab = InstantRelay[Int]
     val log = Trace[Int]()
     relay_ab.adaptNow(log)
     src_a.adaptNow(relay_ab)
     src_b.adaptNow(relay_ab)
-    assert(log.value == (a ++ b))
+    assert(log.value.reverse == (a ++ b))
   }
 
   test("source sink relay map contramap") {
@@ -30,7 +27,7 @@ class RelayTest extends FunSuite:
     val b = 5 to 9
     val src_a = deplete(a)
     val src_b = deplete(b)
-    val relay_ab = Relay[Int]
+    val relay_ab = InstantRelay[Int]
     val doubles = Trace[Int]()
     val halves = Trace[Double]()
     relay_ab.map(_ * 2).adaptNow(doubles)
@@ -42,7 +39,7 @@ class RelayTest extends FunSuite:
   }
 
   test("diamond") {
-    val r = new Relay[Int]
+    val r = new InstantRelay[Int]
     val pairs = Trace[(Int, Boolean)]()
     val isPositive = r.map(_ > 0)
     val doubledNumbers = r.map(_ * 2)
@@ -50,5 +47,6 @@ class RelayTest extends FunSuite:
     combinedStream.adaptNow(pairs)
     r.set(-1)
     r.set(1)
-    assert(pairs.value == List((-2, false), (2, true)))
+    println(pairs.value.reverse)
+    assert(pairs.value.reverse == List((-2, false), (2, true)))
   }

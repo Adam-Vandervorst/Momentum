@@ -1,6 +1,6 @@
 package be.adamv.momentum
 
-import be.adamv.momentum.concrete.Relay
+import be.adamv.momentum.concrete.InstantRelay
 
 import collection.mutable.ListBuffer
 
@@ -13,7 +13,7 @@ package util:
     xs.foreach(snk.set)
 
   def callback[X](): (Sink[X, Unit], Descend[Unit, X, Unit]) =
-    val r = new Relay[X]
+    val r = new InstantRelay[X]
     (r, r)
 
 //  def newTicker(): (Producer[Unit, Unit], Int => Unit) =

@@ -32,7 +32,7 @@ class WeatherEmail extends FunSuite:
     val api: Source[WeatherReport, Token] = WeatherAPI()
 
     val (hand, clock) = callback[Unit]()
-    val api_call_server: Relay[WeatherReport] = Relay()
+    val api_call_server: InstantRelay[WeatherReport] = InstantRelay()
     clock.adaptNow(api_call_server.contramap(_ => api.get("j23oa")))
     val email_server: Descend[Unit, Temp, Unit] = api_call_server.map(_.temperature)
 
